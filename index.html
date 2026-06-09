@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Babes & Babies</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --pink: #D4537E;
+    --pink-light: #FBEAF0;
+    --pink-deep: #993556;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-deep: #0F6E56;
+    --cream: #FDF8F5;
+    --dark: #1C1C1C;
+    --muted: #6B6B6B;
+    --border: rgba(0,0,0,0.08);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --wa: +2347065668695;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); background: var(--cream); color: var(--dark); font-size: 15px; line-height: 1.6; }
+
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(253,248,245,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 5%; height: 60px; }
+  .nav-logo { font-family: var(--font-display); font-size: 1.25rem; color: var(--dark); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+  .nav-logo span.amp { color: var(--pink); }
+  .nav-links { display: flex; gap: 6px; }
+  .nav-links a { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 20px; transition: all .2s; }
+  .nav-links a:hover { color: var(--dark); background: var(--border); }
+  .nav-cta { background: var(--pink); color: #fff !important; border-radius: 20px !important; }
+  .nav-cta:hover { background: var(--pink-deep) !important; color: #fff !important; }
+  .hamburger { display: none; flex-direction: column; gap: 4px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--dark); border-radius: 2px; }
+  .mobile-menu { display: none; position: fixed; top: 60px; left: 0; right: 0; background: var(--cream); border-bottom: 1px solid var(--border); padding: 1rem 5%; z-index: 99; flex-direction: column; gap: 4px; }
+  .mobile-menu a { font-size: 15px; font-weight: 500; color: var(--dark); text-decoration: none; padding: 10px 0; border-bottom: 1px solid var(--border); display: block; }
+  .mobile-menu.open { display: flex; }
+
+  /* HERO */
+  #home { min-height: 88vh; display: flex; align-items: center; padding: 4rem 5%; position: relative; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #FDF0F5 0%, #FDF8F5 50%, #EDFBF5 100%); z-index: 0; }
+  .hero-accent { position: absolute; right: -80px; top: 10%; width: 420px; height: 420px; background: radial-gradient(circle, #FBEAF0 0%, transparent 70%); z-index: 0; border-radius: 50%; }
+  .hero-accent2 { position: absolute; left: -60px; bottom: 0%; width: 300px; height: 300px; background: radial-gradient(circle, #E1F5EE 0%, transparent 70%); z-index: 0; border-radius: 50%; }
+  .hero-content { position: relative; z-index: 1; max-width: 600px; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .hero-eyebrow span { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); display: inline-block; }
+  h1.hero-title { font-family: var(--font-display); font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.15; color: var(--dark); margin-bottom: 1rem; }
+  h1.hero-title em { font-style: normal; color: var(--pink); }
+  .hero-sub { font-size: 1rem; color: var(--muted); max-width: 460px; margin-bottom: 2rem; line-height: 1.7; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 30px; font-weight: 600; font-size: 14px; text-decoration: none; cursor: pointer; border: none; transition: all .2s; }
+  .btn-pink { background: var(--pink); color: #fff; }
+  .btn-pink:hover { background: var(--pink-deep); transform: translateY(-1px); }
+  .btn-teal { background: var(--teal); color: #fff; }
+  .btn-teal:hover { background: var(--teal-deep); transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--dark); border: 1.5px solid var(--border); }
+  .btn-outline:hover { border-color: var(--dark); }
+  .hero-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2.5rem; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--muted); padding: 4px 12px; background: white; border: 1px solid var(--border); border-radius: 20px; }
+
+  /* SECTIONS */
+  section { padding: 5rem 5%; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .6rem; }
+  .section-label.pink { color: var(--pink); }
+  .section-label.teal { color: var(--teal); }
+  h2.section-title { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: .6rem; color: var(--dark); }
+  .section-sub { color: var(--muted); max-width: 480px; margin-bottom: 2.5rem; font-size: 15px; }
+  .section-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+
+  /* DIVIDER STRIPE */
+  .stripe-divider { height: 6px; display: flex; }
+  .stripe-divider span { flex: 1; }
+  .s1 { background: var(--pink-light); }
+  .s2 { background: #f7cce0; }
+  .s3 { background: #c2e9d8; }
+  .s4 { background: var(--teal-light); }
+
+  /* TABS (Babes section) */
+  .tab-row { display: flex; gap: 8px; margin-bottom: 2rem; flex-wrap: wrap; }
+  .tab { padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: transparent; color: var(--muted); transition: all .2s; }
+  .tab.active-pink { background: var(--pink); color: white; border-color: var(--pink); }
+  .tab.active-teal { background: var(--teal); color: white; border-color: var(--teal); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* GRID */
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+
+  /* STYLE CARD (hair booking) */
+  .style-card { background: white; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); cursor: pointer; transition: all .2s; }
+  .style-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
+  .style-card.selected { border: 2px solid var(--pink); }
+  .style-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--pink-light); display: block; }
+  .style-card-body { padding: 12px 14px; }
+  .style-card-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+  .style-card-price { font-size: 13px; color: var(--pink); font-weight: 600; }
+  .style-card-tag { display: inline-block; font-size: 11px; background: var(--pink-light); color: var(--pink-deep); padding: 2px 8px; border-radius: 20px; margin-top: 6px; font-weight: 500; }
+  .select-badge { display: none; position: absolute; top: 10px; right: 10px; background: var(--pink); color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; align-items: center; justify-content: center; }
+  .style-card.selected .select-badge { display: flex; }
+  .style-card-wrap { position: relative; }
+
+  /* PRODUCT CARD */
+  .product-card { background: white; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); transition: all .2s; }
+  .product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+  .product-card img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f0f9f5; display: block; }
+  .product-card-body { padding: 12px 14px; }
+  .product-card-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .product-card-price { font-size: 14px; font-weight: 600; color: var(--teal); }
+  .product-card-wa { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; background: #25D366; color: white; border: none; border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background .2s; }
+  .product-card-wa:hover { background: #1da851; }
+
+  /* BOOKING */
+  #book { background: white; }
+  .booking-wrap { max-width: 580px; }
+  .form-group { margin-bottom: 1.2rem; }
+  label { display: block; font-size: 13px; font-weight: 500; color: var(--dark); margin-bottom: 6px; }
+  input, select, textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px; color: var(--dark); background: var(--cream); outline: none; transition: border .2s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--pink); }
+  .selected-style-preview { background: var(--pink-light); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--pink-deep); font-weight: 500; margin-bottom: 1.2rem; display: none; }
+  .selected-style-preview.visible { display: block; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .submit-wa { width: 100%; padding: 14px; background: var(--pink); color: white; border: none; border-radius: 30px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: .5rem; transition: all .2s; font-family: var(--font-body); display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .submit-wa:hover { background: var(--pink-deep); }
+
+  /* REVIEWS */
+  #reviews { background: var(--pink-light); }
+  .review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+  .review-card { background: white; border-radius: var(--radius); padding: 1.2rem 1.4rem; border: 1px solid var(--border); }
+  .stars { color: #F6C344; font-size: 15px; margin-bottom: 8px; }
+  .review-text { font-size: 14px; color: var(--dark); line-height: 1.6; margin-bottom: 12px; }
+  .reviewer { display: flex; align-items: center; gap: 10px; }
+  .reviewer-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--pink-light); color: var(--pink-deep); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .reviewer-name { font-size: 13px; font-weight: 600; }
+  .reviewer-label { font-size: 11px; color: var(--muted); }
+
+  /* CONTACT */
+  #contact { background: var(--dark); color: white; }
+  #contact h2.section-title { color: white; }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .contact-item { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 1.2rem; }
+  .contact-icon { width: 38px; height: 38px; border-radius: var(--radius-sm); background: rgba(255,255,255,.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 17px; }
+  .contact-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .contact-item p { font-size: 13px; color: rgba(255,255,255,.6); line-height: 1.5; }
+  .contact-wa-btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 26px; background: #25D366; color: white; border-radius: 30px; font-size: 14px; font-weight: 600; text-decoration: none; margin-top: 1.5rem; transition: background .2s; }
+  .contact-wa-btn:hover { background: #1da851; }
+  .qr-box { background: white; border-radius: var(--radius); padding: 1.5rem; text-align: center; }
+  .qr-box canvas, .qr-box img { max-width: 160px; display: block; margin: 0 auto 10px; }
+  .qr-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+  /* FOOTER */
+  footer { background: #111; color: rgba(255,255,255,.5); text-align: center; padding: 1.2rem 5%; font-size: 12px; }
+
+  /* FLOATING WA */
+  .wa-float { position: fixed; bottom: 24px; right: 24px; z-index: 200; width: 52px; height: 52px; background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.2); text-decoration: none; transition: transform .2s; }
+  .wa-float:hover { transform: scale(1.08); }
+  .wa-float svg { width: 28px; height: 28px; fill: white; }
+
+  /* SECTION COLORS */
+  #babes { background: #FFF8FB; }
+  #babies { background: var(--teal-light); }
+
+  @media (max-width: 680px) {
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    #home { padding: 3rem 5%; min-height: auto; }
+    section { padding: 3.5rem 5%; }
+    .grid-3, .grid-4 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#home" class="nav-logo">Babes <span class="amp">&</span> Babies</a>
+  <div class="nav-links">
+    <a href="#babes">Babes</a>
+    <a href="#babies">Babies</a>
+    <a href="#book" class="nav-cta">Book now</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#babes" onclick="toggleMenu()">Babes — Hair & Fashion</a>
+  <a href="#babies" onclick="toggleMenu()">Babies — Care & Products</a>
+  <a href="#book" onclick="toggleMenu()">Book a session</a>
+  <a href="#reviews" onclick="toggleMenu()">Reviews</a>
+  <a href="#contact" onclick="toggleMenu()">Contact & find us</a>
+</div>
+
+<!-- HERO -->
+<section id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-accent"></div>
+  <div class="hero-accent2"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow"><span></span> Now open in Abuja</div>
+    <h1 class="hero-title">Beauty for <em>you.</em><br>Everything for your baby.</h1>
+    <p class="hero-sub">One stop for gorgeous braids, quality hair & fashion — plus everything your little one needs, all under one roof.</p>
+    <div class="hero-actions">
+      <a href="#book" class="btn btn-pink">✦ Book a hair session</a>
+      <a href="#babies" class="btn btn-teal">Shop baby items</a>
+    </div>
+    <div class="hero-badges">
+      <span class="badge">💆‍♀️ Braiding & plaiting</span>
+      <span class="badge">💇 Hair & wigs</span>
+      <span class="badge">👶 Diapers & wipes</span>
+      <span class="badge">🌿 Baby skincare</span>
+    </div>
+  </div>
+</section>
+
+<div class="stripe-divider"><span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span></div>
+
+<!-- BABES SECTION -->
+<section id="babes">
+  <div>
+    <div class="section-label pink">Babes — Hair. Beauty. Confidence</div>
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">Your look, your choice</h2>
+        <p class="section-sub">Browse styles to book, or shop hair and fashion items delivered to you.</p>
+      </div>
+    </div>
+
+    <div class="tab-row" id="babesTabs">
+      <button class="tab active-pink" onclick="switchBabesTab('styles', this)">💇 Hair styles</button>
+      <button class="tab" onclick="switchBabesTab('hair', this)">✨ Hair & accessories</button>
+      <button class="tab" onclick="switchBabesTab('fashion', this)">👗 Female fashion</button>
+    </div>
+
+    <!-- HAIR STYLES TAB -->
+    <div class="tab-panel active" id="tab-styles">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:1.2rem;">Tap a style to select it, then scroll down to book your session.</p>
+      <div class="grid-3" id="stylesGrid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- HAIR SHOP TAB -->
+    <div class="tab-panel" id="tab-hair">
+      <div class="grid-4" id="hairGrid"></div>
+    </div>
+
+    <!-- FASHION TAB -->
+    <div class="tab-panel" id="tab-fashion">
+      <div class="grid-4" id="fashionGrid"></div>
+    </div>
+  </div>
+</section>
+
+<div class="stripe-divider"><span class="s4"></span><span class="s3"></span><span class="s2"></span><span class="s1"></span></div>
+
+<!-- BABIES SECTION -->
+<section id="babies">
+  <div class="section-label teal">Babies — Love. Care. Comfort</div>
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">Everything your baby needs</h2>
+      <p class="section-sub">Quality diapers, wipes, skincare and clothing. Order via WhatsApp — fast delivery or pick up in store.</p>
+    </div>
+  </div>
+
+  <div class="tab-row" id="babiesTabs">
+    <button class="tab active-teal" onclick="switchBabiesTab('diapers', this)">🍼 Diapers & wipes</button>
+    <button class="tab" onclick="switchBabiesTab('skincare', this)">🌿 Skincare</button>
+    <button class="tab" onclick="switchBabiesTab('clothing', this)">👕 Clothing</button>
+  </div>
+
+  <div class="tab-panel active" id="btab-diapers"><div class="grid-4" id="diapersGrid"></div></div>
+  <div class="tab-panel" id="btab-skincare"><div class="grid-4" id="skincareGrid"></div></div>
+  <div class="tab-panel" id="btab-clothing"><div class="grid-4" id="bclothingGrid"></div></div>
+</section>
+
+<!-- BOOKING -->
+<section id="book">
+  <div class="section-label pink">Book a session</div>
+  <h2 class="section-title">Schedule your appointment</h2>
+  <p class="section-sub">Fill in your details and we'll confirm your slot on WhatsApp.</p>
+
+  <div class="booking-wrap">
+    <div class="selected-style-preview" id="stylePreview">
+      ✦ Selected style: <span id="previewName">—</span>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="fname">Your name</label>
+        <input type="text" id="fname" placeholder="e.g. Amina" />
+      </div>
+      <div class="form-group">
+        <label for="fphone">WhatsApp number</label>
+        <input type="tel" id="fphone" placeholder="+234..." />
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="fstyle">Hair style</label>
+      <select id="fstyle">
+        <option value="">— Choose a style —</option>
+        <option>Knotless braids</option>
+        <option>Box braids</option>
+        <option>Cornrows</option>
+        <option>Passion twists</option>
+        <option>Goddess braids</option>
+        <option>Fulani braids</option>
+        <option>Ghana braids</option>
+        <option>Wig installation</option>
+        <option>Other (describe below)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="fdate">Preferred date</label>
+        <input type="date" id="fdate" />
+      </div>
+      <div class="form-group">
+        <label for="ftime">Preferred time</label>
+        <select id="ftime">
+          <option value="">— Pick a slot —</option>
+          <option>9:00 AM</option>
+          <option>10:00 AM</option>
+          <option>11:00 AM</option>
+          <option>12:00 PM</option>
+          <option>1:00 PM</option>
+          <option>2:00 PM</option>
+          <option>3:00 PM</option>
+          <option>4:00 PM</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="fnotes">Any extra details</label>
+      <textarea id="fnotes" rows="3" placeholder="Hair length, colour, anything specific..."></textarea>
+    </div>
+    <button class="submit-wa" onclick="sendBooking()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      Send booking to WhatsApp
+    </button>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section id="reviews">
+  <div class="section-label pink">Happy clients</div>
+  <h2 class="section-title">What people are saying</h2>
+  <div class="review-grid">
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <p class="review-text">"My knotless braids came out absolutely beautiful. The shop is so clean and welcoming. Will definitely be back!"</p>
+      <div class="reviewer"><div class="reviewer-avatar">AF</div><div><div class="reviewer-name">Amaka F.</div><div class="reviewer-label">Knotless braids</div></div></div>
+    </div>
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <p class="review-text">"I bought diapers and wipes for my newborn. Very affordable prices and the baby section is so well stocked!"</p>
+      <div class="reviewer"><div class="reviewer-avatar">RI</div><div><div class="reviewer-name">Ruth I.</div><div class="reviewer-label">Baby products</div></div></div>
+    </div>
+    <div class="review-card">
+      <div class="stars">★★★★★</div>
+      <p class="review-text">"Ordered braiding hair and it arrived the same day. The quality is so much better than what I find at regular markets."</p>
+      <div class="reviewer"><div class="reviewer-avatar">NK</div><div><div class="reviewer-name">Ngozi K.</div><div class="reviewer-label">Hair purchase</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-label" style="color:rgba(255,255,255,.5)">Find us</div>
+  <div class="contact-grid">
+    <div>
+      <h2 class="section-title">Come visit us</h2>
+      <div class="contact-item">
+        <div class="contact-icon">📍</div>
+        <div><h4>Location</h4><p>Abuja, FCT, Nigeria<br><span style="font-size:12px;opacity:.5">(Add your full address here)</span></p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">🕐</div>
+        <div><h4>Opening hours</h4><p>Mon – Sat: 8:00 AM – 7:00 PM<br>Sunday: 10:00 AM – 5:00 PM</p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">📱</div>
+        <div><h4>WhatsApp / Call</h4><p>+234 706 566 8695</p></div>
+      </div>
+      <a class="contact-wa-btn" href="https://wa.me/2347065668695?text=Hi%20Babes%20%26%20Babies!%20I'd%20like%20to%20enquire" target="_blank">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Chat with us on WhatsApp
+      </a>
+    </div>
+    <div>
+      <div class="qr-box" style="background:white;">
+        <div id="qrCanvas" style="display:flex;justify-content:center;margin:0 auto 10px;width:160px;height:160px;"></div>
+        <p class="qr-label" style="color:#666;margin-top:8px;font-size:13px;">Scan to open this page</p>
+        <p style="font-size:11px;color:#aaa;margin-top:4px;">babesandbabies.com</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>© 2025 Babes & Babies — Abuja, Nigeria. All rights reserved.</footer>
+
+<!-- Floating WhatsApp -->
+<a class="wa-float" href="https://wa.me/2347065668695?text=Hi!%20I%20found%20you%20on%20your%20website" target="_blank" aria-label="Chat on WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+</a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const WA = '2347065668695';
+
+// DATA
+const hairstyles = [
+  { name: 'Knotless braids', price: '₦8,000', tag: 'Most popular', img: 'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?w=400&q=80' },
+  { name: 'Box braids', price: '₦7,000', tag: 'Classic', img: 'https://images.unsplash.com/photo-1590055531615-f16d36ffe8ec?w=400&q=80' },
+  { name: 'Cornrows', price: '₦4,500', tag: 'Quick style', img: 'https://images.unsplash.com/photo-1599351431613-18ef1fdd27e3?w=400&q=80' },
+  { name: 'Passion twists', price: '₦9,000', tag: 'Trending', img: 'https://images.unsplash.com/photo-1604004555489-723a93d6ce74?w=400&q=80' },
+  { name: 'Goddess braids', price: '₦10,000', tag: 'Premium', img: 'https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=400&q=80' },
+  { name: 'Fulani braids', price: '₦8,500', tag: 'Cultural', img: 'https://images.unsplash.com/photo-1618375531912-867984bdfd87?w=400&q=80' },
+];
+
+const hairProducts = [
+  { name: 'Braiding hair — 1b', price: '₦1,200', img: '' },
+  { name: 'Braiding hair — burgundy', price: '₦1,300', img: '' },
+  { name: 'Passion twist hair', price: '₦2,500', img: '' },
+  { name: 'Kinky twists pack', price: '₦2,000', img: '' },
+  { name: 'Hair clips set', price: '₦800', img: '' },
+  { name: 'Edge control', price: '₦1,500', img: '' },
+  { name: 'Hair gel (strong)', price: '₦1,200', img: '' },
+  { name: 'Satin bonnet', price: '₦1,800', img: '' },
+];
+
+const fashionProducts = [
+  { name: 'Ankara top', price: '₦5,500', img: '' },
+  { name: 'Wide-leg trousers', price: '₦7,000', img: '' },
+  { name: 'Casual bodycon dress', price: '₦8,000', img: '' },
+  { name: 'Kimono cardigan', price: '₦6,500', img: '' },
+  { name: 'Crop top set', price: '₦4,500', img: '' },
+  { name: 'Lace blouse', price: '₦5,000', img: '' },
+];
+
+const diapers = [
+  { name: 'Pampers — Newborn (46pcs)', price: '₦4,500', img: '' },
+  { name: 'Huggies — Size 2 (52pcs)', price: '₦5,200', img: '' },
+  { name: 'Molfix — Size 3 (60pcs)', price: '₦4,800', img: '' },
+  { name: 'Baby wipes — 80 sheets', price: '₦900', img: '' },
+  { name: 'Unicharm wipes (3-pack)', price: '₦2,400', img: '' },
+  { name: 'Diaper rash cream', price: '₦1,500', img: '' },
+];
+
+const skincare = [
+  { name: 'Johnson\'s baby lotion', price: '₦1,200', img: '' },
+  { name: 'Mustela bath gel', price: '₦2,800', img: '' },
+  { name: 'Baby powder (200g)', price: '₦800', img: '' },
+  { name: 'Petroleum jelly', price: '₦600', img: '' },
+  { name: 'Baby shampoo', price: '₦1,000', img: '' },
+  { name: 'Baby oil (100ml)', price: '₦950', img: '' },
+];
+
+const babyClothing = [
+  { name: 'Onesie set (3-pack)', price: '₦3,500', img: '' },
+  { name: 'Newborn romper', price: '₦2,200', img: '' },
+  { name: 'Baby hat & socks set', price: '₦1,400', img: '' },
+  { name: 'Fleece sleep suit', price: '₦3,000', img: '' },
+  { name: 'Cotton bodysuit', price: '₦1,800', img: '' },
+  { name: 'Bib set (5-pack)', price: '₦1,200', img: '' },
+];
+
+let selectedStyle = '';
+
+function imgFallback(color) {
+  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='${encodeURIComponent(color)}'/><text x='50%' y='50%' font-family='sans-serif' font-size='13' fill='%23999' text-anchor='middle' dy='.3em'>Photo coming soon</text></svg>`;
+}
+
+function renderStyles() {
+  const grid = document.getElementById('stylesGrid');
+  grid.innerHTML = hairstyles.map((s, i) => `
+    <div class="style-card-wrap">
+      <div class="style-card" onclick="selectStyle('${s.name}', ${i})" id="scard-${i}">
+        <img src="${s.img}" onerror="this.src='${imgFallback('#fbeaf0')}'" alt="${s.name}" loading="lazy" />
+        <div class="style-card-body">
+          <div class="style-card-name">${s.name}</div>
+          <div class="style-card-price">${s.price}</div>
+          <span class="style-card-tag">${s.tag}</span>
+        </div>
+        <div class="select-badge">✓</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderProductGrid(containerId, items, accentColor, msgPrefix) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.map(p => {
+    const msg = encodeURIComponent(`Hi Babes & Babies! I'd like to order: ${p.name} (${p.price})`);
+    return `<div class="product-card">
+      <img src="${p.img || imgFallback(accentColor)}" alt="${p.name}" loading="lazy" />
+      <div class="product-card-body">
+        <div class="product-card-name">${p.name}</div>
+        <div class="product-card-price">${p.price}</div>
+        <a class="product-card-wa" href="https://wa.me/${WA}?text=${msg}" target="_blank">
+          Order on WhatsApp
+        </a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectStyle(name, idx) {
+  document.querySelectorAll('.style-card').forEach((c, i) => c.classList.toggle('selected', i === idx));
+  selectedStyle = name;
+  document.getElementById('fstyle').value = name;
+  const prev = document.getElementById('stylePreview');
+  document.getElementById('previewName').textContent = name;
+  prev.classList.add('visible');
+}
+
+function switchBabesTab(tab, btn) {
+  document.querySelectorAll('#babesTabs .tab').forEach(b => b.className = 'tab');
+  btn.className = 'tab active-pink';
+  ['styles','hair','fashion'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+function switchBabiesTab(tab, btn) {
+  document.querySelectorAll('#babiesTabs .tab').forEach(b => b.className = 'tab');
+  btn.className = 'tab active-teal';
+  ['diapers','skincare','clothing'].forEach(t => {
+    document.getElementById('btab-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+function sendBooking() {
+  const name = document.getElementById('fname').value.trim();
+  const phone = document.getElementById('fphone').value.trim();
+  const style = document.getElementById('fstyle').value;
+  const date = document.getElementById('fdate').value;
+  const time = document.getElementById('ftime').value;
+  const notes = document.getElementById('fnotes').value.trim();
+  if (!name || !style || !date || !time) { alert('Please fill in your name, style, date and time.'); return; }
+  const msg = `Hi Babes & Babies! 💇‍♀️ I'd like to book a hair session.\n\n👤 Name: ${name}\n📱 Phone: ${phone || 'same as WhatsApp'}\n✦ Style: ${style}\n📅 Date: ${date}\n🕐 Time: ${time}${notes ? '\n📝 Notes: '+notes : ''}`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function toggleMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+function generateQR() {
+  try {
+    const el = document.getElementById('qrCanvas');
+    el.innerHTML = '';
+    new QRCode(el, {
+      text: 'https://babesandbabies.netlify.app/',
+      width: 160, height: 160,
+      colorDark: '#1C1C1C', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) { console.error('QR error', e); }
+}
+
+// Init
+renderStyles();
+renderProductGrid('hairGrid', hairProducts, '#fbeaf0', 'hair item');
+renderProductGrid('fashionGrid', fashionProducts, '#fbeaf0', 'fashion item');
+renderProductGrid('diapersGrid', diapers, '#e1f5ee', 'baby product');
+renderProductGrid('skincareGrid', skincare, '#e1f5ee', 'skincare product');
+renderProductGrid('bclothingGrid', babyClothing, '#e1f5ee', 'baby clothing');
+window.addEventListener('load', generateQR);
+
+// Set min date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('fdate').min = today;
+</script>
+</body>
+</html>

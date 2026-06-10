@@ -166,6 +166,42 @@
   #babes { background: #FFF8FB; }
   #babies { background: var(--teal-light); }
 
+  /* AI ADVISOR */
+  .ai-section { background: linear-gradient(135deg, #FFF0F7 0%, #F0FFF8 100%); border-radius: var(--radius); padding: 2rem; margin-bottom: 2rem; border: 1px solid var(--border); }
+  .ai-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+  .ai-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .ai-avatar-pink { background: var(--pink); }
+  .ai-avatar-teal { background: var(--teal); }
+  .ai-title { font-weight: 600; font-size: 15px; }
+  .ai-subtitle { font-size: 12px; color: var(--muted); }
+  .ai-powered { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--muted); background: white; border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; margin-bottom: 1rem; }
+  .chat-box { background: white; border-radius: var(--radius); padding: 1rem; min-height: 80px; max-height: 320px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+  .chat-msg { display: flex; gap: 8px; align-items: flex-start; }
+  .chat-msg.user { flex-direction: row-reverse; }
+  .chat-bubble { padding: 9px 13px; border-radius: 14px; font-size: 13px; line-height: 1.55; max-width: 85%; }
+  .chat-bubble.ai { background: var(--cream); color: var(--dark); border-bottom-left-radius: 4px; }
+  .chat-bubble.user { background: var(--pink); color: white; border-bottom-right-radius: 4px; }
+  .chat-bubble.teal { background: var(--teal); color: white; border-bottom-right-radius: 4px; }
+  .chat-bubble.ai-teal { background: var(--teal-light); color: var(--dark); border-bottom-left-radius: 4px; }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 24px; font-family: var(--font-body); font-size: 13px; outline: none; }
+  .chat-input:focus { border-color: var(--pink); }
+  .chat-input.teal-focus:focus { border-color: var(--teal); }
+  .chat-send { padding: 10px 18px; border-radius: 24px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; transition: all .2s; }
+  .chat-send-pink { background: var(--pink); color: white; }
+  .chat-send-pink:hover { background: var(--pink-deep); }
+  .chat-send-teal { background: var(--teal); color: white; }
+  .chat-send-teal:hover { background: var(--teal-deep); }
+  .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+  .typing span { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+  .quick-prompts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .quick-prompt { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: white; color: var(--muted); transition: all .2s; }
+  .quick-prompt:hover { border-color: var(--pink); color: var(--pink); }
+  .quick-prompt.teal:hover { border-color: var(--teal); color: var(--teal); }
+
   @media (max-width: 680px) {
     .nav-links { display: none; }
     .hamburger { display: flex; }
@@ -243,7 +279,35 @@
 
     <!-- HAIR STYLES TAB -->
     <div class="tab-panel active" id="tab-styles">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:1.2rem;">Tap a style to select it, then scroll down to book your session.</p>
+      
+    <!-- AI HAIR STYLIST -->
+    <div class="ai-section" id="hairAI">
+      <div class="ai-powered">✨ Powered by Gemini AI</div>
+      <div class="ai-header">
+        <div class="ai-avatar ai-avatar-pink">💇</div>
+        <div>
+          <div class="ai-title">Babes AI Stylist</div>
+          <div class="ai-subtitle">Describe yourself — I'll recommend the perfect style for you</div>
+        </div>
+      </div>
+      <div class="quick-prompts">
+        <button class="quick-prompt" onclick="quickPrompt('hair', 'I have natural 4c hair, round face, attending a wedding')">👰 Wedding style</button>
+        <button class="quick-prompt" onclick="quickPrompt('hair', 'I want something low maintenance for work')">💼 Work style</button>
+        <button class="quick-prompt" onclick="quickPrompt('hair', 'I want a trendy style that suits dark skin')">✨ Trendy look</button>
+        <button class="quick-prompt" onclick="quickPrompt('hair', 'Wetin style go good for me wey get short hair?')">🤔 Ask in Pidgin</button>
+      </div>
+      <div class="chat-box" id="hairChatBox">
+        <div class="chat-msg">
+          <div class="chat-bubble ai">Hi! 👋 I'm your Babes AI Stylist. Tell me about your hair type, face shape, and the occasion — I'll recommend the best style for you from our catalogue! You fit talk English, Pidgin, or Ibibio 😊</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="hairChatInput" placeholder="e.g. I have thick hair, oval face, going to a party..." onkeydown="if(event.key==='Enter') sendAIMessage('hair')" />
+        <button class="chat-send chat-send-pink" id="hairSendBtn" onclick="sendAIMessage('hair')">Send ✦</button>
+      </div>
+    </div>
+
+<p style="font-size:13px;color:var(--muted);margin-bottom:1.2rem;">Tap a style to select it, then scroll down to book your session.</p>
       <div class="grid-3" id="stylesGrid">
         <!-- populated by JS -->
       </div>
@@ -270,6 +334,34 @@
     <div>
       <h2 class="section-title">Everything your baby needs</h2>
       <p class="section-sub">Quality diapers, wipes, skincare and clothing. Order via WhatsApp — fast delivery or pick up in store.</p>
+    </div>
+  </div>
+
+
+  <!-- AI BABY ADVISOR -->
+  <div class="ai-section" id="babyAI">
+    <div class="ai-powered">✨ Powered by Gemini AI</div>
+    <div class="ai-header">
+      <div class="ai-avatar ai-avatar-teal">👶</div>
+      <div>
+        <div class="ai-title">Babies AI Advisor</div>
+        <div class="ai-subtitle">Tell me about your baby — I'll recommend the right products</div>
+      </div>
+    </div>
+    <div class="quick-prompts">
+      <button class="quick-prompt teal" onclick="quickPrompt('baby', 'My baby is 2 months old and has sensitive skin')">🌿 Sensitive skin</button>
+      <button class="quick-prompt teal" onclick="quickPrompt('baby', 'I need diapers for a newborn, first time mum')">🍼 Newborn diapers</button>
+      <button class="quick-prompt teal" onclick="quickPrompt('baby', 'My baby has diaper rash, what do I use?')">💊 Diaper rash</button>
+      <button class="quick-prompt teal" onclick="quickPrompt('baby', 'Which size pampers for 6 month old baby?')">📦 Diaper size</button>
+    </div>
+    <div class="chat-box" id="babyChatBox">
+      <div class="chat-msg">
+        <div class="chat-bubble ai-teal">Hello mama! 👶 I'm your Babies AI Advisor. Tell me your baby's age, weight, and any concerns — I'll recommend the best products from our shop for your little one!</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input teal-focus" id="babyChatInput" placeholder="e.g. My baby is 3 months, 5kg, has dry skin..." onkeydown="if(event.key==='Enter') sendAIMessage('baby')" />
+      <button class="chat-send chat-send-teal" id="babySendBtn" onclick="sendAIMessage('baby')">Send ✦</button>
     </div>
   </div>
 
@@ -556,6 +648,98 @@ function toggleMenu() {
 }
 
 
+
+
+// ── GEMINI AI (via secure Netlify proxy) ──────────────────
+const hairHistory = [];
+const babyHistory = [];
+
+const HAIR_SYSTEM = `You are Babes AI Stylist for "Babes & Babies" shop in Akwa Ibom State, Nigeria. 
+You help female clients choose the best hairstyle from the shop catalogue based on their hair type, face shape, and occasion.
+Our available styles and prices: Knotless braids (₦8,000), Box braids (₦7,000), Cornrows (₦4,500), Passion twists (₦9,000), Goddess braids (₦10,000), Fulani braids (₦8,500), Ghana braids (₦8,000), Wig installation (₦6,000).
+Respond in the same language the client uses — English, Nigerian Pidgin, or Ibibio. Be warm, friendly and helpful. Keep replies concise (3-5 sentences). Always recommend 1-2 specific styles from our catalogue with prices. End by inviting them to scroll down and book a session.`;
+
+const BABY_SYSTEM = `You are Babies AI Advisor for "Babes & Babies" shop in Akwa Ibom State, Nigeria.
+You help mothers choose the right baby products based on their baby's age, weight, skin type and needs.
+Our products: Diapers (Pampers Newborn ₦4,500, Huggies Size 2 ₦5,200, Molfix Size 3 ₦4,800), Baby wipes (₦900), Unicharm wipes 3-pack (₦2,400), Diaper rash cream (₦1,500), Johnson's baby lotion (₦1,200), Mustela bath gel (₦2,800), Baby powder (₦800), Petroleum jelly (₦600), Baby shampoo (₦1,000), Baby oil (₦950), Onesie set 3-pack (₦3,500), Newborn romper (₦2,200), Baby hat & socks set (₦1,400).
+Respond in the same language the mother uses — English, Nigerian Pidgin, or Ibibio. Be warm, caring and practical. Keep replies concise (3-5 sentences). Always recommend specific products with prices. Reassure the mother and suggest they order via WhatsApp.`;
+
+async function callGemini(systemPrompt, history, userMsg) {
+  const res = await fetch('/.netlify/functions/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ systemPrompt, history, userMsg })
+  });
+  const data = await res.json();
+  if (data.reply) return data.reply;
+  throw new Error(data.error || 'No response');
+}
+
+function appendChat(boxId, text, type) {
+  const box = document.getElementById(boxId);
+  const msg = document.createElement('div');
+  msg.className = 'chat-msg' + (type === 'user' || type === 'teal' ? ' user' : '');
+  msg.innerHTML = `<div class="chat-bubble ${type}">${text.replace(/
+/g,'<br>')}</div>`;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function showTyping(boxId) {
+  const box = document.getElementById(boxId);
+  const t = document.createElement('div');
+  t.className = 'chat-msg'; t.id = boxId + '_typing';
+  t.innerHTML = `<div class="chat-bubble ai" style="padding:10px 13px"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  box.appendChild(t);
+  box.scrollTop = box.scrollHeight;
+}
+
+function removeTyping(boxId) {
+  const t = document.getElementById(boxId + '_typing');
+  if (t) t.remove();
+}
+
+async function sendAIMessage(type) {
+  const isHair = type === 'hair';
+  const inputId = isHair ? 'hairChatInput' : 'babyChatInput';
+  const boxId = isHair ? 'hairChatBox' : 'babyChatBox';
+  const btnId = isHair ? 'hairSendBtn' : 'babySendBtn';
+  const history = isHair ? hairHistory : babyHistory;
+  const system = isHair ? HAIR_SYSTEM : BABY_SYSTEM;
+  const userBubble = isHair ? 'user' : 'teal';
+  const aiBubble = isHair ? 'ai' : 'ai-teal';
+
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  btn.disabled = true;
+  appendChat(boxId, msg, userBubble);
+  showTyping(boxId);
+  history.push({ role: 'user', text: msg });
+
+  try {
+    const reply = await callGemini(system, history.slice(0,-1), msg);
+    removeTyping(boxId);
+    appendChat(boxId, reply, aiBubble);
+    history.push({ role: 'model', text: reply });
+  } catch(e) {
+    removeTyping(boxId);
+    appendChat(boxId, 'Sorry, I had a connection issue. Please try again! 🙏', aiBubble);
+    history.pop();
+  }
+  btn.disabled = false;
+  input.focus();
+}
+
+function quickPrompt(type, text) {
+  const inputId = type === 'hair' ? 'hairChatInput' : 'babyChatInput';
+  document.getElementById(inputId).value = text;
+  sendAIMessage(type);
+}
+// ── END GEMINI AI ──────────────────────────────────────────
 
 // Init
 renderStyles();

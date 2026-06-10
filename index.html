@@ -291,14 +291,14 @@
         </div>
       </div>
       <div class="quick-prompts">
-        <button class="quick-prompt" onclick="quickPrompt('hair', 'I have natural 4c hair, round face, attending a wedding')">👰 Wedding style</button>
+        <button class="quick-prompt" onclick="quickPrompt('hair', 'I have natural 4c hair, round face, attending a wedding')" type="button">👰 Wedding style</button>
         <button class="quick-prompt" onclick="quickPrompt('hair', 'I want something low maintenance for work')">💼 Work style</button>
         <button class="quick-prompt" onclick="quickPrompt('hair', 'I want a trendy style that suits dark skin')">✨ Trendy look</button>
         <button class="quick-prompt" onclick="quickPrompt('hair', 'Wetin style go good for me wey get short hair?')">🤔 Ask in Pidgin</button>
       </div>
       <div class="chat-box" id="hairChatBox">
         <div class="chat-msg">
-          <div class="chat-bubble ai">Hi! 👋 I'm your Babes AI Stylist. Tell me about your hair type, face shape, and the occasion — I'll recommend the best style for you from our catalogue! You fit talk English, Pidgin, or Ibibio 😊</div>
+          <div class="chat-bubble ai">Hi! 👋 I am your Babes AI Stylist. Tell me about your hair type, face shape, and the occasion — I'll recommend the best style for you from our catalogue! You fit talk English, Pidgin, or Ibibio 😊</div>
         </div>
       </div>
       <div class="chat-input-row">
@@ -345,7 +345,7 @@
       <div class="ai-avatar ai-avatar-teal">👶</div>
       <div>
         <div class="ai-title">Babies AI Advisor</div>
-        <div class="ai-subtitle">Tell me about your baby — I'll recommend the right products</div>
+        <div class="ai-subtitle">Tell me about your baby — I will recommend the right products</div>
       </div>
     </div>
     <div class="quick-prompts">
@@ -356,7 +356,7 @@
     </div>
     <div class="chat-box" id="babyChatBox">
       <div class="chat-msg">
-        <div class="chat-bubble ai-teal">Hello mama! 👶 I'm your Babies AI Advisor. Tell me your baby's age, weight, and any concerns — I'll recommend the best products from our shop for your little one!</div>
+        <div class="chat-bubble ai-teal">Hello mama! 👶 I am your Babies AI Advisor. Tell me your baby age, weight, and any concerns — I will recommend the best products from our shop for your little one!</div>
       </div>
     </div>
     <div class="chat-input-row">
@@ -550,7 +550,7 @@ const diapers = [
 ];
 
 const skincare = [
-  { name: 'Johnson\'s baby lotion', price: '₦1,200', img: '' },
+  { name: "Johnson's baby lotion", price: "₦1,200", img: "" },
   { name: 'Mustela bath gel', price: '₦2,800', img: '' },
   { name: 'Baby powder (200g)', price: '₦800', img: '' },
   { name: 'Petroleum jelly', price: '₦600', img: '' },
@@ -660,7 +660,7 @@ Our available styles and prices: Knotless braids (₦8,000), Box braids (₦7,00
 Respond in the same language the client uses — English, Nigerian Pidgin, or Ibibio. Be warm, friendly and helpful. Keep replies concise (3-5 sentences). Always recommend 1-2 specific styles from our catalogue with prices. End by inviting them to scroll down and book a session.`;
 
 const BABY_SYSTEM = `You are Babies AI Advisor for "Babes & Babies" shop in Akwa Ibom State, Nigeria.
-You help mothers choose the right baby products based on their baby's age, weight, skin type and needs.
+You help mothers choose the right baby products based on their baby age, weight, skin type and needs.
 Our products: Diapers (Pampers Newborn ₦4,500, Huggies Size 2 ₦5,200, Molfix Size 3 ₦4,800), Baby wipes (₦900), Unicharm wipes 3-pack (₦2,400), Diaper rash cream (₦1,500), Johnson's baby lotion (₦1,200), Mustela bath gel (₦2,800), Baby powder (₦800), Petroleum jelly (₦600), Baby shampoo (₦1,000), Baby oil (₦950), Onesie set 3-pack (₦3,500), Newborn romper (₦2,200), Baby hat & socks set (₦1,400).
 Respond in the same language the mother uses — English, Nigerian Pidgin, or Ibibio. Be warm, caring and practical. Keep replies concise (3-5 sentences). Always recommend specific products with prices. Reassure the mother and suggest they order via WhatsApp.`;
 
@@ -679,8 +679,10 @@ function appendChat(boxId, text, type) {
   const box = document.getElementById(boxId);
   const msg = document.createElement('div');
   msg.className = 'chat-msg' + (type === 'user' || type === 'teal' ? ' user' : '');
-  msg.innerHTML = `<div class="chat-bubble ${type}">${text.replace(/
-/g,'<br>')}</div>`;
+  const div = document.createElement('div');
+  div.className = 'chat-bubble ' + type;
+  div.innerHTML = text.split('\n').join('<br>');
+  msg.appendChild(div);
   box.appendChild(msg);
   box.scrollTop = box.scrollHeight;
 }
@@ -727,7 +729,8 @@ async function sendAIMessage(type) {
     history.push({ role: 'model', text: reply });
   } catch(e) {
     removeTyping(boxId);
-    appendChat(boxId, 'Sorry, I had a connection issue. Please try again! 🙏', aiBubble);
+    appendChat(boxId, 'Error: ' + e.message + ' — Please try again!', aiBubble);
+    console.error('AI error:', e);
     history.pop();
   }
   btn.disabled = false;

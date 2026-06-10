@@ -399,7 +399,7 @@
     </div>
     <div class="form-group">
       <label for="fstyle">Hair style</label>
-      <select id="fstyle">
+      <select id="fstyle" onchange="toggleOtherStyle(this)">
         <option value="">— Choose a style —</option>
         <option>Knotless braids</option>
         <option>Box braids</option>
@@ -411,6 +411,10 @@
         <option>Wig installation</option>
         <option>Other (describe below)</option>
       </select>
+    </div>
+    <div class="form-group" id="otherStyleGroup" style="display:none;">
+      <label for="fotherStyle">Describe your style</label>
+      <input type="text" id="fotherStyle" placeholder="e.g. Half up half down, Senegalese twists, Lemonade braids..." />
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -631,10 +635,24 @@ function switchBabiesTab(tab, btn) {
   });
 }
 
+function toggleOtherStyle(select) {
+  const group = document.getElementById('otherStyleGroup');
+  const input = document.getElementById('fotherStyle');
+  if (select.value === 'Other (describe below)') {
+    group.style.display = 'block';
+    input.focus();
+  } else {
+    group.style.display = 'none';
+    input.value = '';
+  }
+}
+
 function sendBooking() {
   const name = document.getElementById('fname').value.trim();
   const phone = document.getElementById('fphone').value.trim();
-  const style = document.getElementById('fstyle').value;
+  const styleSelect = document.getElementById('fstyle').value;
+  const otherStyle = document.getElementById('fotherStyle').value.trim();
+  const style = styleSelect === 'Other (describe below)' && otherStyle ? otherStyle : styleSelect;
   const date = document.getElementById('fdate').value;
   const time = document.getElementById('ftime').value;
   const notes = document.getElementById('fnotes').value.trim();
@@ -658,11 +676,12 @@ const HAIR_SYSTEM = `You are Babes AI Stylist for "Babes & Babies" shop in Akwa 
 You help female clients choose the best hairstyle from the shop catalogue.
 Our available styles and prices: Knotless braids (₦8,000), Box braids (₦7,000), Cornrows (₦4,500), Passion twists (₦9,000), Goddess braids (₦10,000), Fulani braids (₦8,500), Ghana braids (₦8,000), Wig installation (₦6,000).
 
-VERY IMPORTANT LANGUAGE RULE - YOU MUST FOLLOW THIS:
-- If the customer writes in Nigerian Pidgin (words like "abeg", "wetin", "wan", "fit", "oga", "na", "dey", "sharp", "pikin") — you MUST reply ENTIRELY in Nigerian Pidgin. Do not switch to English.
-- If the customer writes in Ibibio language — you MUST reply ENTIRELY in Ibibio language.
-- If the customer writes in English — reply in English.
-- NEVER mix languages. Match the customer's language exactly.
+VERY IMPORTANT LANGUAGE RULE — FOLLOW STRICTLY:
+- If the customer writes in clear English (no Pidgin words) — reply in CLEAN ENGLISH ONLY. No Pidgin words at all. Not even "no wahala", "abeg" or any Nigerian slang.
+- If the customer writes in Nigerian Pidgin — reply ENTIRELY in Pidgin.
+- If the customer writes in Ibibio — reply ENTIRELY in Ibibio.
+- DEFAULT is always English unless the customer clearly uses Pidgin or Ibibio first.
+- NEVER mix languages under any circumstance.
 
 Be warm, friendly and helpful. Keep replies to 3-4 sentences. Always recommend 1-2 specific styles with prices. End by inviting them to book a session. Reply ONCE only — never repeat the same information twice.`;
 
@@ -677,11 +696,12 @@ TONE RULES — VERY IMPORTANT:
 - Make the mother feel confident and capable, not worried.
 - Keep energy positive and solution-focused at all times.
 
-VERY IMPORTANT LANGUAGE RULE:
-- If the mother writes in Nigerian Pidgin (words like "pikin", "abeg", "wetin", "wan", "dey", "palmpas", "na", "no wahala") — reply ENTIRELY in Nigerian Pidgin.
-- If the mother writes in Ibibio language — reply ENTIRELY in Ibibio language.
-- If the mother writes in English — reply in English.
-- NEVER mix languages. Match the customer language exactly.
+VERY IMPORTANT LANGUAGE RULE — FOLLOW STRICTLY:
+- If the customer writes in clear English (no Pidgin words) — reply in CLEAN ENGLISH ONLY. No Pidgin words at all. Not even "no wahala", "mama", "pikin" or any Nigerian slang.
+- If the customer writes in Nigerian Pidgin — reply ENTIRELY in Pidgin.
+- If the customer writes in Ibibio — reply ENTIRELY in Ibibio.
+- DEFAULT is always English unless the customer clearly uses Pidgin or Ibibio first.
+- NEVER mix languages under any circumstance.
 
 Be caring and practical. Keep replies to 3-4 sentences. Always recommend specific products with prices. Suggest ordering via WhatsApp. Reply ONCE only — never repeat the same information twice.`;
 

@@ -671,8 +671,9 @@ async function callGemini(systemPrompt, history, userMsg) {
     body: JSON.stringify({ systemPrompt, history, userMsg })
   });
   const data = await res.json();
+  console.log('Chat function response:', data);
   if (data.reply) return data.reply;
-  throw new Error(data.error || 'No response');
+  throw new Error(data.error || 'Status ' + res.status);
 }
 
 function appendChat(boxId, text, type) {

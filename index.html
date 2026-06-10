@@ -712,7 +712,6 @@ async function callGemini(systemPrompt, history, userMsg, retries = 2) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ systemPrompt, history, userMsg })
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     console.log('Chat function response:', data);
     if (data.reply) return data.reply;

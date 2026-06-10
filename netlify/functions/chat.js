@@ -5,16 +5,12 @@ exports.handler = async function(event) {
 
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_KEY) {
-    return { 
-      statusCode: 500, 
-      body: JSON.stringify({ error: 'API key not configured' }) 
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured' }) };
   }
 
   try {
     const { systemPrompt, history, userMsg } = JSON.parse(event.body);
 
-    // Build contents array - only include valid history
     const contents = [];
     if (history && history.length > 0) {
       history.forEach(h => {
@@ -26,16 +22,11 @@ exports.handler = async function(event) {
     const requestBody = {
       contents: contents,
       systemInstruction: { parts: [{ text: systemPrompt }] },
-      generationConfig: { 
-        temperature: 0.8, 
-        maxOutputTokens: 400 
-      }
+      generationConfig: { temperature: 0.7, maxOutputTokens: 350 }
     };
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_KEY}`;
-    
-    console.log('Calling Gemini with', contents.length, 'messages');
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -44,13 +35,12 @@ exports.handler = async function(event) {
 
     const data = await response.json();
     console.log('Gemini status:', response.status);
-    console.log('Gemini response:', JSON.stringify(data).slice(0, 500));
 
     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
       const reply = data.candidates[0].content.parts[0].text;
       return {
         statusCode: 200,
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         },
@@ -58,8 +48,8 @@ exports.handler = async function(event) {
       };
     }
 
-    // Return the actual error from Gemini for debugging
     const errMsg = data.error ? data.error.message : JSON.stringify(data);
+    console.log('Gemini error:', errMsg);
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -67,7 +57,7 @@ exports.handler = async function(event) {
     };
 
   } catch (err) {
-    console.error('Function error:', err);
+    console.error('Function error:', err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message })

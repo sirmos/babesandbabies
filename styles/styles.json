@@ -3,21 +3,18 @@
     "id": "salon_cornrow_updo",
     "title": "Cornrow updo",
     "image": "images/IMG_20260519_164017.jpg",
-    "tryOnImage": "images/tryon/salon_cornrow_updo.jpg",
     "tag": "Our work ✅"
   },
   {
     "id": "salon_close_cornrows",
     "title": "Close cornrows",
     "image": "images/IMG_20260609_111514.jpg",
-    "tryOnImage": "images/tryon/salon_close_cornrows.jpg",
     "tag": "Our work ✅"
   },
   {
     "id": "salon_stitch_braids",
     "title": "Stitch braids",
     "image": "images/Picture1.jpg",
-    "tryOnImage": "images/tryon/salon_stitch_braids.jpg",
     "tag": "Trending"
   },
   {
@@ -31,28 +28,24 @@
     "id": "salon_knotless_box_braids",
     "title": "Knotless box braids",
     "image": "images/Picture3.jpg",
-    "tryOnImage": "images/tryon/salon_knotless_box_braids.jpg",
     "tag": "Most popular"
   },
   {
     "id": "salon_tribal_braids",
     "title": "Tribal braids",
     "image": "images/Picture4.jpg",
-    "tryOnImage": "images/tryon/salon_tribal_braids.jpg",
     "tag": "Cultural"
   },
   {
     "id": "salon_kinky_twists",
     "title": "Kinky twists",
     "image": "images/Picture5.jpg",
-    "tryOnImage": "images/tryon/salon_kinky_twists.jpg",
     "tag": "Natural look"
   },
   {
     "id": "salon_senegalese_twists",
     "title": "Senegalese twists",
     "image": "images/Picture6.jpg",
-    "tryOnImage": "images/tryon/salon_senegalese_twists.jpg",
     "tag": "Classic"
   },
   {

@@ -142,6 +142,79 @@ export default {
         });
       }
 
+      if (path === '/youcam/hair-transfer' && request.method === 'POST') {
+        const { imageBase64, refUrl, keepMyColor } = await request.json();
+        const allowedReferencePrefix = 'https://babesandbabies-dcb39.web.app/';
+        if (typeof refUrl !== 'string' || !refUrl.startsWith(allowedReferencePrefix)) {
+          return new Response(JSON.stringify({ error: 'Invalid reference URL' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const apiKey = env.YOUCAM_API_KEY;
+        const imageBuffer = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+        const fileSize = imageBuffer.length;
+        const fileRes = await fetch('https://yce-api-01.makeupar.com/s2s/v2.0/file', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: [{ content_type: 'image/jpeg', file_name: 'photo.jpg', file_size: fileSize }] })
+        });
+        const fileData = await fileRes.json();
+        if (!fileRes.ok || fileData.status !== 200) return new Response(JSON.stringify({ error: 'File upload failed: ' + JSON.stringify(fileData) }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+
+        const fileInfo = fileData.data?.files?.[0];
+        if (!fileInfo?.file_id || !fileInfo.requests?.[0]?.url) return new Response(JSON.stringify({ error: 'File upload failed: ' + JSON.stringify(fileData) }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+        const fileId = fileInfo.file_id;
+        const putRes = await fetch(fileInfo.requests[0].url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'image/jpeg', 'Content-Length': String(fileSize) },
+          body: imageBuffer
+        });
+        if (!putRes.ok) return new Response(JSON.stringify({ error: 'Upload failed: ' + putRes.status + ' ' + await putRes.text() }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+
+        const taskRes = await fetch('https://yce-api-01.makeupar.com/s2s/v2.1/task/hair-transfer', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ src_file_id: fileId, ref_file_url: refUrl, hair_color: keepMyColor ? 'src' : 'ref' })
+        });
+        const taskData = await taskRes.json();
+        if (!taskRes.ok || taskData.status !== 200) return new Response(JSON.stringify({ error: 'Task failed: ' + JSON.stringify(taskData) }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+
+        const taskId = taskData.data?.task_id;
+        if (!taskId) return new Response(JSON.stringify({ error: 'Task failed: ' + JSON.stringify(taskData) }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+        let lastPoll = null;
+        let resultUrl = null;
+        for (let attempt = 0; attempt < 20; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          const pollRes = await fetch(`https://yce-api-01.makeupar.com/s2s/v2.1/task/hair-transfer/${taskId}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+          });
+          lastPoll = await pollRes.json();
+          if (lastPoll.data?.task_status === 'success') {
+            resultUrl = lastPoll.data?.results?.url || lastPoll.data?.results?.[0]?.url;
+            break;
+          }
+          if (lastPoll.data?.task_status === 'error') break;
+        }
+
+        if (!resultUrl) return new Response(JSON.stringify({ error: 'Hair transfer failed: ' + JSON.stringify(lastPoll) }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+        return new Response(JSON.stringify({ resultUrl }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // YouCam Skin Analysis
       if (path === '/youcam/skin') {
         const { imageBase64 } = await request.json();

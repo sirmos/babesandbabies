@@ -32,6 +32,11 @@
     .style-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: #fff0f5; }
     .style-card span { display: block; overflow: hidden; margin-top: 6px; color: #442533; font-size: 12px; line-height: 1.3; text-overflow: ellipsis; }
     .style-card.selected span { color: #c73366; font-weight: bold; }
+    .style-source-badge { display: inline-block; margin-top: 6px; padding: 2px 6px; border-radius: 10px; background: #fbeaf0; color: #993556; font-size: 10px; font-weight: bold; }
+    .style-image-placeholder { display: grid; width: 100%; aspect-ratio: 1; place-items: center; padding: 10px; border-radius: 4px; background: #fff0f5; color: #8c3456; font-size: 11px; text-align: center; }
+    .keep-color-option { display: none; align-items: center; gap: 8px; margin: 0 0 8px; color: #555; font-size: 13px; }
+    .keep-color-option.visible { display: flex; }
+    .keep-color-option input { width: 16px; height: 16px; margin: 0; accent-color: #e8447a; }
     .hair-comparison { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; margin-top: 16px; border-radius: 12px; background: #fff0f5; --split: 50%; }
     .hair-comparison-image, .hair-comparison-before { position: absolute; inset: 0; width: 100%; height: 100%; }
     .hair-comparison-image { object-fit: cover; }
@@ -108,6 +113,7 @@
       <div class="status" id="hairTemplateStatus" aria-live="polite">Loading hairstyles...</div>
       <div class="styles-grid" id="hairStylesGrid" aria-label="Hairstyle templates"></div>
 
+      <label class="keep-color-option" id="keepColorOption"><input id="keepMyColor" type="checkbox" checked /> Keep my natural hair color</label>
       <button class="btn" id="hairBtn" onclick="runHairTryOn()" disabled>✨ Try On This Style</button>
       <div class="status" id="hairStatus"></div>
     </div>
@@ -123,7 +129,7 @@
         <input class="hair-comparison-range" id="hairCompareRange" type="range" min="0" max="100" value="50" aria-label="Drag to compare the original photo and AI preview" />
       </div>
       <p class="hair-preview-note">AI preview. Results are an approximation of how the style may look.</p>
-      <a href="https://wa.me/2348012345678?text=Hi! I saw the AI hairstyle try-on and I want to book an appointment" target="_blank">
+      <a id="hairBookLink" href="https://wa.me/2348012345678" target="_blank" rel="noopener noreferrer">
         <button class="btn" style="margin-top:16px;">📱 Book This Style on WhatsApp</button>
       </a>
     </div>
@@ -165,30 +171,49 @@ let selectedStyle = null;
 let hairPhotoBase64 = null;
 let skinPhotoBase64 = null;
 let hairTemplates = [];
+let salonStyles = [];
 let hairTemplatesLoaded = false;
 let hairCategory = 'Female';
+const hashParts = window.location.hash.slice(1).split('&');
+const requestedSalonStyleId = new URLSearchParams(hashParts.slice(1).join('&')).get('style');
 
 function renderHairTemplates() {
   const grid = document.getElementById('hairStylesGrid');
   const query = document.getElementById('hairSearch').value.trim().toLowerCase();
-  const filtered = hairTemplates.filter(template => {
+  const matchesSearch = template => template.title?.toLowerCase().includes(query);
+  const filteredSalonStyles = salonStyles.filter(matchesSearch);
+  const filteredPresets = hairTemplates.filter(template => {
     const categoryMatches = query.length > 0 || hairCategory === 'All' || template.category_name?.toLowerCase() === hairCategory.toLowerCase();
-    return categoryMatches && template.title?.toLowerCase().includes(query);
+    return categoryMatches && matchesSearch(template);
   });
+  const filtered = [...filteredSalonStyles, ...filteredPresets];
   grid.replaceChildren();
 
   filtered.forEach(template => {
     const card = document.createElement('button');
     card.type = 'button';
-    card.className = 'style-card' + (String(selectedStyle?.id) === String(template.id) ? ' selected' : '');
-    card.setAttribute('aria-pressed', String(String(selectedStyle?.id) === String(template.id)));
+    const isSelected = selectedStyle?.source === template.source && String(selectedStyle?.id) === String(template.id);
+    card.className = 'style-card' + (isSelected ? ' selected' : '');
+    card.setAttribute('aria-pressed', String(isSelected));
     const image = document.createElement('img');
-    image.src = template.thumb;
+    image.src = template.source === 'salon' ? new URL(template.image, window.location.href).href : template.thumb;
     image.alt = '';
     image.loading = 'lazy';
+    image.onerror = () => {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'style-image-placeholder';
+      placeholder.textContent = template.source === 'salon' ? 'Salon photo coming soon' : 'Preview unavailable';
+      image.replaceWith(placeholder);
+    };
     const title = document.createElement('span');
     title.textContent = template.title || 'Untitled style';
     card.append(image, title);
+    if (template.source === 'salon') {
+      const badge = document.createElement('small');
+      badge.className = 'style-source-badge';
+      badge.textContent = 'Our salon';
+      card.appendChild(badge);
+    }
     card.onclick = () => {
       selectedStyle = template;
       renderHairTemplates();
@@ -209,9 +234,20 @@ async function loadHairTemplates() {
     if (!response.ok) throw new Error('Request failed: ' + response.status);
     const templates = await response.json();
     if (!Array.isArray(templates)) throw new Error('Unexpected template response.');
-    hairTemplates = templates;
+    hairTemplates = templates.map(template => ({ ...template, source: 'preset' }));
+    try {
+      const salonResponse = await fetch('styles/styles.json');
+      if (salonResponse.ok) {
+        const salonData = await salonResponse.json();
+        if (Array.isArray(salonData)) salonStyles = salonData
+          .filter(style => typeof style.tryOnImage === 'string' && style.tryOnImage.trim())
+          .map(style => ({ ...style, source: 'salon' }));
+      }
+    } catch {}
     hairTemplatesLoaded = true;
+    if (requestedSalonStyleId) selectedStyle = salonStyles.find(style => String(style.id) === requestedSalonStyleId) || selectedStyle;
     renderHairTemplates();
+    checkHairReady();
   } catch (error) {
     console.error('Hair templates request failed:', error);
     status.textContent = 'Unable to load hairstyles. Please try again.';
@@ -241,7 +277,7 @@ function switchTab(tab, updateHash = true) {
   if (tab === 'hair') loadHairTemplates();
 }
 
-switchTab(window.location.hash.toLowerCase() === '#skin' ? 'skin' : 'hair', false);
+switchTab(hashParts[0].toLowerCase() === 'skin' ? 'skin' : 'hair', false);
 
 async function imageFileToJpegBase64(file) {
   const imageDataUrl = await new Promise((resolve, reject) => {
@@ -287,6 +323,7 @@ async function previewSkin(e) {
 
 function checkHairReady() {
   document.getElementById('hairBtn').disabled = !(hairPhotoBase64 && selectedStyle);
+  document.getElementById('keepColorOption').classList.toggle('visible', selectedStyle?.source === 'salon');
 }
 
 async function runHairTryOn() {
@@ -297,10 +334,20 @@ async function runHairTryOn() {
   status.textContent = 'Working on it... this takes about 30 seconds';
 
   try {
-    const res = await fetch(WORKER_URL + '/youcam/hair', {
+    const isSalonStyle = selectedStyle.source === 'salon';
+    const requestBody = { imageBase64: hairPhotoBase64 };
+    let route = '/youcam/hair';
+    if (isSalonStyle) {
+      route = '/youcam/hair-transfer';
+      requestBody.refUrl = new URL(selectedStyle.tryOnImage, window.location.href).href;
+      requestBody.keepMyColor = document.getElementById('keepMyColor').checked;
+    } else {
+      requestBody.styleId = selectedStyle.id;
+    }
+    const res = await fetch(WORKER_URL + route, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: hairPhotoBase64, styleId: selectedStyle.id })
+      body: JSON.stringify(requestBody)
     });
     const data = await res.json();
     console.error('Hair try-on response:', data);
@@ -313,6 +360,8 @@ async function runHairTryOn() {
       comparisonRange.value = 50;
       comparison.style.setProperty('--split', '50%');
       document.getElementById('hairResultCard').style.display = 'block';
+      const styleName = selectedStyle.title || selectedStyle.name || 'this hairstyle';
+      document.getElementById('hairBookLink').href = 'https://wa.me/2348012345678?text=' + encodeURIComponent(`Hi! I saw the AI hairstyle try-on for ${styleName} and I want to book an appointment.`);
       status.textContent = 'Done! See your new look below.';
     } else {
       status.textContent = data.error ? 'Error: ' + data.error : 'Error: No result returned.';

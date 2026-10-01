@@ -19,10 +19,33 @@
     .upload-area input { display: none; }
     .upload-area img { max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 12px; }
     .upload-label { font-size: 14px; color: #e8447a; font-weight: bold; }
-    .styles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
-    .style-btn { border: 2px solid #eee; border-radius: 10px; padding: 12px; cursor: pointer; text-align: center; font-size: 13px; background: white; transition: all 0.2s; }
-    .style-btn:hover { border-color: #e8447a; background: #fff0f5; }
-    .style-btn.selected { border-color: #e8447a; background: #fff0f5; color: #e8447a; font-weight: bold; }
+    .hair-controls { display: grid; gap: 10px; margin-bottom: 12px; }
+    .hair-search { width: 100%; border: 1px solid #e8c5d1; border-radius: 8px; padding: 11px 12px; font: inherit; }
+    .hair-search:focus { outline: 2px solid #e8447a; outline-offset: 1px; }
+    .filter-chips { display: flex; gap: 8px; }
+    .filter-chip { border: 1px solid #e8c5d1; border-radius: 20px; padding: 7px 14px; color: #8c3456; background: white; cursor: pointer; font-weight: bold; }
+    .filter-chip.active { border-color: #e8447a; color: white; background: #e8447a; }
+    .styles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-height: 420px; overflow-y: auto; overscroll-behavior: contain; padding: 2px 4px 2px 2px; margin-bottom: 16px; }
+    .style-card { min-width: 0; overflow: hidden; border: 2px solid #eee; border-radius: 8px; padding: 6px; cursor: pointer; text-align: left; background: white; transition: border-color 0.2s, background 0.2s; }
+    .style-card:hover { border-color: #e8447a; background: #fff8fa; }
+    .style-card.selected { border-color: #e8447a; background: #fff0f5; box-shadow: 0 0 0 1px #e8447a; }
+    .style-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: #fff0f5; }
+    .style-card span { display: block; overflow: hidden; margin-top: 6px; color: #442533; font-size: 12px; line-height: 1.3; text-overflow: ellipsis; }
+    .style-card.selected span { color: #c73366; font-weight: bold; }
+    .hair-comparison { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; margin-top: 16px; border-radius: 12px; background: #fff0f5; --split: 50%; }
+    .hair-comparison-image, .hair-comparison-before { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .hair-comparison-image { object-fit: cover; }
+    .hair-comparison-before { clip-path: inset(0 calc(100% - var(--split)) 0 0); }
+    .hair-comparison-before img { object-fit: cover; }
+    .hair-comparison-divider { position: absolute; z-index: 1; top: 0; bottom: 0; left: var(--split); width: 2px; background: white; transform: translateX(-50%); box-shadow: 0 0 4px rgba(0,0,0,0.35); pointer-events: none; }
+    .hair-comparison-handle { position: absolute; top: 50%; left: 50%; display: grid; width: 38px; height: 38px; place-items: center; border: 2px solid white; border-radius: 50%; background: #e8447a; transform: translate(-50%, -50%); box-shadow: 0 1px 5px rgba(0,0,0,0.3); }
+    .hair-comparison-handle::after { content: '↔'; color: white; font-size: 20px; line-height: 1; }
+    .hair-comparison:focus-within .hair-comparison-handle { outline: 3px solid #1a1a2e; outline-offset: 2px; }
+    .hair-comparison-range { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
+    .hair-comparison-label { position: absolute; z-index: 1; top: 10px; padding: 4px 8px; border-radius: 4px; color: #442533; background: rgba(255,255,255,0.9); font-size: 11px; font-weight: bold; }
+    .hair-comparison-label.before { left: 10px; }
+    .hair-comparison-label.after { right: 10px; }
+    .hair-preview-note { margin: 10px 0 4px; color: #777; font-size: 12px; text-align: center; }
     .btn { width: 100%; padding: 14px; background: #e8447a; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
     .btn:hover { background: #c73366; }
     .btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -34,20 +57,30 @@
     .tab-btn.active { border-color: #e8447a; color: #e8447a; background: #fff0f5; }
     .section { display: none; }
     .section.active { display: block; }
+    @media (max-width: 420px) {
+      .card { padding: 18px; }
+      .styles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      header { gap: 8px; padding: 12px 14px; }
+      header a { font-size: 12px; white-space: nowrap; }
+      header h1 { font-size: 16px; }
+      header .badge { display: none; }
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <a href="index.html">← Back</a>
+  <a href="index.html">← Back to Babes &amp; Babies</a>
   <h1>✨ AI Try-On <span class="badge">Powered by YouCam</span></h1>
 </header>
 
 <div class="container">
 
   <div class="tab-btns">
-    <button class="tab-btn active" onclick="switchTab('hair')">💇 Hair Try-On</button>
-    <button class="tab-btn" onclick="switchTab('skin')">🌿 Skin Analysis</button>
+    <button class="tab-btn active" data-tab="hair" onclick="switchTab('hair')">💇 Hair Try-On</button>
+    <button class="tab-btn" data-tab="skin" onclick="switchTab('skin')">🌿 Skin Analysis</button>
   </div>
 
   <!-- HAIR TRY-ON -->
@@ -64,7 +97,16 @@
       </div>
 
       <p style="font-weight:bold;margin-bottom:8px;">Choose a hairstyle:</p>
-      <div class="styles-grid" id="hairStylesGrid"></div>
+      <div class="hair-controls">
+        <input class="hair-search" id="hairSearch" type="search" placeholder="Search styles, e.g. braid or cornrow" aria-label="Search hairstyles" />
+        <div class="filter-chips" role="group" aria-label="Filter hairstyles by category">
+          <button class="filter-chip" type="button" data-hair-category="All" onclick="setHairCategory('All')">All</button>
+          <button class="filter-chip active" type="button" data-hair-category="Female" onclick="setHairCategory('Female')">Female</button>
+          <button class="filter-chip" type="button" data-hair-category="Male" onclick="setHairCategory('Male')">Male</button>
+        </div>
+      </div>
+      <div class="status" id="hairTemplateStatus" aria-live="polite">Loading hairstyles...</div>
+      <div class="styles-grid" id="hairStylesGrid" aria-label="Hairstyle templates"></div>
 
       <button class="btn" id="hairBtn" onclick="runHairTryOn()" disabled>✨ Try On This Style</button>
       <div class="status" id="hairStatus"></div>
@@ -72,7 +114,15 @@
 
     <div class="card" id="hairResultCard" style="display:none;">
       <h2>Your New Look!</h2>
-      <img id="hairResult" class="result-img" src="" alt="Hair try-on result" />
+      <div class="hair-comparison" id="hairComparison" style="--split:50%;">
+        <img id="hairCompareAfter" class="hair-comparison-image" src="" alt="AI hairstyle result" />
+        <div class="hair-comparison-before"><img id="hairCompareBefore" class="hair-comparison-image" src="" alt="Original uploaded photo" /></div>
+        <div class="hair-comparison-divider" aria-hidden="true"><span class="hair-comparison-handle"></span></div>
+        <span class="hair-comparison-label before" aria-hidden="true">ORIGINAL</span>
+        <span class="hair-comparison-label after" aria-hidden="true">AI PREVIEW</span>
+        <input class="hair-comparison-range" id="hairCompareRange" type="range" min="0" max="100" value="50" aria-label="Drag to compare the original photo and AI preview" />
+      </div>
+      <p class="hair-preview-note">AI preview. Results are an approximation of how the style may look.</p>
       <a href="https://wa.me/2348012345678?text=Hi! I saw the AI hairstyle try-on and I want to book an appointment" target="_blank">
         <button class="btn" style="margin-top:16px;">📱 Book This Style on WhatsApp</button>
       </a>
@@ -97,7 +147,7 @@
     </div>
 
     <div class="card" id="skinResultCard" style="display:none;">
-      <h2>Your Skin Report</h2>
+      <h2>Your Skin Report (Mum's Skin)</h2>
       <div id="skinScores"></div>
       <div id="skinRec" style="margin-top:16px;"></div>
       <a href="https://wa.me/2348012345678?text=Hi! I just did the AI skin analysis and I want to order skincare products" target="_blank">
@@ -111,65 +161,128 @@
 <script>
 const WORKER_URL = 'https://babesandbabies-chat.babesandbabies.workers.dev';
 
-const hairstyles = [
-  { name: 'Cornrow updo', id: 'cornrow_updo' },
-  { name: 'Close cornrows', id: 'close_cornrows' },
-  { name: 'Knotless box braids', id: 'knotless_box' },
-  { name: 'Stitch braids', id: 'stitch_braids' },
-  { name: 'Ghana braids', id: 'ghana_braids' },
-  { name: 'Fulani braids', id: 'fulani_braids' },
-];
-
 let selectedStyle = null;
 let hairPhotoBase64 = null;
 let skinPhotoBase64 = null;
+let hairTemplates = [];
+let hairTemplatesLoaded = false;
+let hairCategory = 'Female';
 
-// Render hairstyle buttons
-const grid = document.getElementById('hairStylesGrid');
-hairstyles.forEach(s => {
-  const btn = document.createElement('button');
-  btn.className = 'style-btn';
-  btn.textContent = s.name;
-  btn.onclick = () => {
-    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedStyle = s;
-    checkHairReady();
-  };
-  grid.appendChild(btn);
+function renderHairTemplates() {
+  const grid = document.getElementById('hairStylesGrid');
+  const query = document.getElementById('hairSearch').value.trim().toLowerCase();
+  const filtered = hairTemplates.filter(template => {
+    const categoryMatches = query.length > 0 || hairCategory === 'All' || template.category_name?.toLowerCase() === hairCategory.toLowerCase();
+    return categoryMatches && template.title?.toLowerCase().includes(query);
+  });
+  grid.replaceChildren();
+
+  filtered.forEach(template => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'style-card' + (String(selectedStyle?.id) === String(template.id) ? ' selected' : '');
+    card.setAttribute('aria-pressed', String(String(selectedStyle?.id) === String(template.id)));
+    const image = document.createElement('img');
+    image.src = template.thumb;
+    image.alt = '';
+    image.loading = 'lazy';
+    const title = document.createElement('span');
+    title.textContent = template.title || 'Untitled style';
+    card.append(image, title);
+    card.onclick = () => {
+      selectedStyle = template;
+      renderHairTemplates();
+      checkHairReady();
+    };
+    grid.appendChild(card);
+  });
+
+  document.getElementById('hairTemplateStatus').textContent = filtered.length ? '' : 'No styles found, try another word';
+}
+
+async function loadHairTemplates() {
+  if (hairTemplatesLoaded) return;
+  const status = document.getElementById('hairTemplateStatus');
+  status.textContent = 'Loading hairstyles...';
+  try {
+    const response = await fetch(WORKER_URL + '/youcam/hair-templates');
+    if (!response.ok) throw new Error('Request failed: ' + response.status);
+    const templates = await response.json();
+    if (!Array.isArray(templates)) throw new Error('Unexpected template response.');
+    hairTemplates = templates;
+    hairTemplatesLoaded = true;
+    renderHairTemplates();
+  } catch (error) {
+    console.error('Hair templates request failed:', error);
+    status.textContent = 'Unable to load hairstyles. Please try again.';
+  }
+}
+
+function setHairCategory(category) {
+  hairCategory = category;
+  document.querySelectorAll('[data-hair-category]').forEach(button => {
+    button.classList.toggle('active', button.dataset.hairCategory === category);
+  });
+  renderHairTemplates();
+}
+
+document.getElementById('hairSearch').addEventListener('input', renderHairTemplates);
+loadHairTemplates();
+
+document.getElementById('hairCompareRange').addEventListener('input', event => {
+  document.getElementById('hairComparison').style.setProperty('--split', event.target.value + '%');
 });
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+function switchTab(tab, updateHash = true) {
+  document.querySelectorAll('.tab-btn').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tab + '-section').classList.add('active');
-  event.target.classList.add('active');
+  if (updateHash) history.replaceState(null, '', '#' + tab);
+  if (tab === 'hair') loadHairTemplates();
 }
 
-function previewHair(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('hairPreview').src = ev.target.result;
-    document.getElementById('hairPreview').style.display = 'block';
-    hairPhotoBase64 = ev.target.result.split(',')[1];
-    checkHairReady();
-  };
-  reader.readAsDataURL(file);
+switchTab(window.location.hash.toLowerCase() === '#skin' ? 'skin' : 'hair', false);
+
+async function imageFileToJpegBase64(file) {
+  const imageDataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise((resolve, reject) => {
+    const loadedImage = new Image();
+    loadedImage.onload = () => resolve(loadedImage);
+    loadedImage.onerror = reject;
+    loadedImage.src = imageDataUrl;
+  });
+  const scale = Math.min(1, 1080 / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(image.naturalWidth * scale);
+  canvas.height = Math.round(image.naturalHeight * scale);
+  canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+  const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  return { dataUrl: jpegDataUrl, base64: jpegDataUrl.split(',')[1] };
 }
 
-function previewSkin(e) {
+async function previewHair(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('skinPreview').src = ev.target.result;
-    document.getElementById('skinPreview').style.display = 'block';
-    skinPhotoBase64 = ev.target.result.split(',')[1];
-    document.getElementById('skinBtn').disabled = false;
-  };
-  reader.readAsDataURL(file);
+  const jpeg = await imageFileToJpegBase64(file);
+  document.getElementById('hairPreview').src = jpeg.dataUrl;
+  document.getElementById('hairPreview').style.display = 'block';
+  hairPhotoBase64 = jpeg.base64;
+  checkHairReady();
+}
+
+async function previewSkin(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const jpeg = await imageFileToJpegBase64(file);
+  document.getElementById('skinPreview').src = jpeg.dataUrl;
+  document.getElementById('skinPreview').style.display = 'block';
+  skinPhotoBase64 = jpeg.base64;
+  document.getElementById('skinBtn').disabled = false;
 }
 
 function checkHairReady() {
@@ -180,7 +293,8 @@ async function runHairTryOn() {
   const btn = document.getElementById('hairBtn');
   const status = document.getElementById('hairStatus');
   btn.disabled = true;
-  status.textContent = 'Uploading your photo...';
+  btn.textContent = 'Working...';
+  status.textContent = 'Working on it... this takes about 30 seconds';
 
   try {
     const res = await fetch(WORKER_URL + '/youcam/hair', {
@@ -189,18 +303,26 @@ async function runHairTryOn() {
       body: JSON.stringify({ imageBase64: hairPhotoBase64, styleId: selectedStyle.id })
     });
     const data = await res.json();
+    console.error('Hair try-on response:', data);
 
     if (data.resultUrl) {
-      document.getElementById('hairResult').src = data.resultUrl;
+      document.getElementById('hairCompareBefore').src = document.getElementById('hairPreview').src;
+      document.getElementById('hairCompareAfter').src = data.resultUrl;
+      const comparison = document.getElementById('hairComparison');
+      const comparisonRange = document.getElementById('hairCompareRange');
+      comparisonRange.value = 50;
+      comparison.style.setProperty('--split', '50%');
       document.getElementById('hairResultCard').style.display = 'block';
       status.textContent = 'Done! See your new look below.';
     } else {
-      status.textContent = 'Error: ' + (data.error || 'Something went wrong. Please try again.');
+      status.textContent = data.error ? 'Error: ' + data.error : 'Error: No result returned.';
     }
   } catch(e) {
-    status.textContent = 'Error: ' + e.message;
+    console.error('Hair try-on request failed:', e);
+    status.textContent = 'Something went wrong. Please try again.';
   }
-  btn.disabled = false;
+  btn.textContent = '✨ Try On This Style';
+  checkHairReady();
 }
 
 async function runSkinAnalysis() {
@@ -216,6 +338,8 @@ async function runSkinAnalysis() {
       body: JSON.stringify({ imageBase64: skinPhotoBase64 })
     });
     const data = await res.json();
+    console.error('Skin analysis response:', data);
+    if (data.recommendationError) console.error('Gemini recommendation error:', data.recommendationError);
 
     if (data.scores) {
       const scoreDiv = document.getElementById('skinScores');
@@ -226,17 +350,22 @@ async function runSkinAnalysis() {
         </div>
       `).join('');
 
-      document.getElementById('skinRec').innerHTML = `
-        <p style="font-weight:bold;margin-bottom:8px;">Recommended products for you:</p>
-        <p>${data.recommendation}</p>
-      `;
+      const recommendationContainer = document.getElementById('skinRec');
+      const recommendationHeading = document.createElement('p');
+      recommendationHeading.style.fontWeight = 'bold';
+      recommendationHeading.style.marginBottom = '8px';
+      recommendationHeading.textContent = 'Recommended products for you and your little one:';
+      const recommendationText = document.createElement('p');
+      recommendationText.textContent = (data.recommendation || '').replace(/\*/g, '');
+      recommendationContainer.replaceChildren(recommendationHeading, recommendationText);
       document.getElementById('skinResultCard').style.display = 'block';
       status.textContent = 'Analysis complete!';
     } else {
-      status.textContent = 'Error: ' + (data.error || 'Something went wrong. Please try again.');
+      status.textContent = data.error ? 'Error: ' + data.error : 'Error: Analysis result missing.';
     }
   } catch(e) {
-    status.textContent = 'Error: ' + e.message;
+    console.error('Skin analysis request failed:', e);
+    status.textContent = 'Something went wrong. Please try again.';
   }
   btn.disabled = false;
 }

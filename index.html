@@ -34,6 +34,8 @@
   .nav-links { display: flex; gap: 6px; }
   .nav-links a { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 20px; transition: all .2s; }
   .nav-links a:hover { color: var(--dark); background: var(--border); }
+  .nav-links a.nav-ai { display: inline-flex; align-items: center; gap: 6px; }
+  .nav-new { display: inline-flex; align-items: center; border-radius: 20px; padding: 1px 7px; background: var(--pink-light); color: var(--pink-deep); font-size: 10px; font-weight: 700; line-height: 1.5; }
   .nav-cta { background: var(--pink); color: #fff !important; border-radius: 20px !important; }
   .nav-cta:hover { background: var(--pink-deep) !important; color: #fff !important; }
   .hamburger { display: none; flex-direction: column; gap: 4px; cursor: pointer; padding: 4px; }
@@ -61,6 +63,8 @@
   .btn-teal:hover { background: var(--teal-deep); transform: translateY(-1px); }
   .btn-outline { background: transparent; color: var(--dark); border: 1.5px solid var(--border); }
   .btn-outline:hover { border-color: var(--dark); }
+  .btn-ai { background: white; color: var(--pink-deep); border: 1.5px solid var(--pink); }
+  .btn-ai:hover { background: var(--pink-light); }
   .hero-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2.5rem; }
   .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--muted); padding: 4px 12px; background: white; border: 1px solid var(--border); border-radius: 20px; }
 
@@ -169,6 +173,13 @@
   /* SECTION COLORS */
   #babes { background: #FFF8FB; }
   #babies { background: var(--teal-light); }
+  #try-on { background: linear-gradient(135deg, #FFF0F7 0%, #F0FFF8 100%); }
+  .tryon-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; max-width: 900px; }
+  .tryon-card { display: flex; flex-direction: column; align-items: flex-start; min-height: 220px; padding: 1.5rem; background: white; border: 1px solid var(--border); border-top: 3px solid var(--pink); border-radius: var(--radius); }
+  .tryon-card:nth-child(2) { border-top-color: var(--teal); }
+  .tryon-card h3 { margin-bottom: .6rem; font-family: var(--font-display); font-size: 1.25rem; color: var(--dark); }
+  .tryon-card p { flex: 1; margin-bottom: 1.2rem; color: var(--muted); font-size: 14px; }
+  .tryon-card .btn { min-height: 44px; }
 
   /* AI ADVISOR */
   .ai-section { background: linear-gradient(135deg, #FFF0F7 0%, #F0FFF8 100%); border-radius: var(--radius); padding: 2rem; margin-bottom: 2rem; border: 1px solid var(--border); }
@@ -218,6 +229,12 @@
     section { padding: 3.5rem 5%; }
     .grid-3, .grid-4 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
     .services-grid { grid-template-columns: 1fr 1fr; }
+    .tryon-grid { grid-template-columns: 1fr; }
+    .tryon-card { min-height: 0; }
+  }
+  @media (min-width: 681px) and (max-width: 900px) {
+    .nav-links { gap: 0; }
+    .nav-links a { padding-right: 7px; padding-left: 7px; font-size: 12px; }
   }
 </style>
 </head>
@@ -229,6 +246,8 @@
   <div class="nav-links">
     <a href="#babes">Babes</a>
     <a href="#babies">Babies</a>
+    <a href="#try-on">Try before you book</a>
+    <a href="tryon.html" class="nav-ai">AI Try-On <span class="nav-new">New</span></a>
     <a href="#book" class="nav-cta">Book now</a>
     <a href="#contact">Contact</a>
   </div>
@@ -239,6 +258,8 @@
 <div class="mobile-menu" id="mobileMenu">
   <a href="#babes" onclick="toggleMenu()">Babes — Hair & Fashion</a>
   <a href="#babies" onclick="toggleMenu()">Babies — Care & Products</a>
+  <a href="#try-on" onclick="toggleMenu()">Try before you book</a>
+  <a href="tryon.html">AI Try-On <span class="nav-new">New</span></a>
   <a href="#book" onclick="toggleMenu()">Book a session</a>
   <a href="#reviews" onclick="toggleMenu()">Reviews</a>
   <a href="#contact" onclick="toggleMenu()">Contact & find us</a>
@@ -256,6 +277,7 @@
     <div class="hero-actions">
       <a href="#book" class="btn btn-pink">✦ Book a hair session</a>
       <a href="#babies" class="btn btn-teal">Shop baby items</a>
+      <a href="tryon.html#hair" class="btn btn-ai">✨ Try a hairstyle with AI</a>
     </div>
     <div class="hero-badges">
       <span class="badge">💆‍♀️ Braiding & plaiting</span>
@@ -267,6 +289,29 @@
 </section>
 
 <div class="stripe-divider"><span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span></div>
+
+<!-- AI TRY-ON SECTION -->
+<section id="try-on">
+  <div class="section-label pink">Your next look, previewed</div>
+  <div class="section-head">
+    <div>
+      <h2 class="section-title">Try before you book</h2>
+      <p class="section-sub">Powered by YouCam AI</p>
+    </div>
+  </div>
+  <div class="tryon-grid">
+    <article class="tryon-card">
+      <h3>AI Hair Try-On</h3>
+      <p>See braids, curls and more on your own photo before you book.</p>
+      <a href="tryon.html#hair" class="btn btn-pink">Try a hairstyle</a>
+    </article>
+    <article class="tryon-card">
+      <h3>AI Skin Analysis</h3>
+      <p>Upload a selfie, get your skin report and product picks for you and your little one.</p>
+      <a href="tryon.html#skin" class="btn btn-teal">Analyse my skin</a>
+    </article>
+  </div>
+</section>
 
 <!-- BABES SECTION -->
 <section id="babes">

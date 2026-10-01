@@ -37,6 +37,10 @@
     .keep-color-option { display: none; align-items: center; gap: 8px; margin: 0 0 8px; color: #555; font-size: 13px; }
     .keep-color-option.visible { display: flex; }
     .keep-color-option input { width: 16px; height: 16px; margin: 0; accent-color: #e8447a; }
+    .style-reference { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 8px; border: 1px solid #f1d5df; border-radius: 8px; background: #fff8fa; }
+    .style-reference img { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 6px; object-fit: cover; background: #fff0f5; }
+    .style-reference-label { display: block; margin-bottom: 3px; color: #777; font-size: 11px; }
+    .style-reference-name { display: block; color: #442533; font-size: 13px; font-weight: bold; }
     .hair-comparison { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; margin-top: 16px; border-radius: 12px; background: #fff0f5; --split: 50%; }
     .hair-comparison-image, .hair-comparison-before { position: absolute; inset: 0; width: 100%; height: 100%; }
     .hair-comparison-image { object-fit: cover; }
@@ -104,10 +108,11 @@
       <p style="font-weight:bold;margin-bottom:8px;">Choose a hairstyle:</p>
       <div class="hair-controls">
         <input class="hair-search" id="hairSearch" type="search" placeholder="Search styles, e.g. braid or cornrow" aria-label="Search hairstyles" />
-        <div class="filter-chips" role="group" aria-label="Filter hairstyles by category">
-          <button class="filter-chip" type="button" data-hair-category="All" onclick="setHairCategory('All')">All</button>
-          <button class="filter-chip active" type="button" data-hair-category="Female" onclick="setHairCategory('Female')">Female</button>
+        <div class="filter-chips" role="group" aria-label="Filter YouCam hairstyle templates">
+          <button class="filter-chip active" type="button" data-hair-category="Braids & natural" onclick="setHairCategory('Braids & natural')">Braids &amp; natural</button>
+          <button class="filter-chip" type="button" data-hair-category="All female" onclick="setHairCategory('All female')">All female</button>
           <button class="filter-chip" type="button" data-hair-category="Male" onclick="setHairCategory('Male')">Male</button>
+          <button class="filter-chip" type="button" data-hair-category="All" onclick="setHairCategory('All')">All</button>
         </div>
       </div>
       <div class="status" id="hairTemplateStatus" aria-live="polite">Loading hairstyles...</div>
@@ -128,7 +133,11 @@
         <span class="hair-comparison-label after" aria-hidden="true">AI PREVIEW</span>
         <input class="hair-comparison-range" id="hairCompareRange" type="range" min="0" max="100" value="50" aria-label="Drag to compare the original photo and AI preview" />
       </div>
-      <p class="hair-preview-note">AI preview. Results are an approximation of how the style may look.</p>
+      <div class="style-reference" id="hairStyleReference">
+        <img id="hairReferenceImage" src="" alt="" />
+        <div><span class="style-reference-label">Style reference</span><span class="style-reference-name" id="hairReferenceName"></span></div>
+      </div>
+      <p class="hair-preview-note">AI preview, an approximation. Your stylist will recreate the real style.</p>
       <a id="hairBookLink" href="https://wa.me/2348012345678" target="_blank" rel="noopener noreferrer">
         <button class="btn" style="margin-top:16px;">📱 Book This Style on WhatsApp</button>
       </a>
@@ -173,9 +182,29 @@ let skinPhotoBase64 = null;
 let hairTemplates = [];
 let salonStyles = [];
 let hairTemplatesLoaded = false;
-let hairCategory = 'Female';
+let hairCategory = 'Braids & natural';
 const hashParts = window.location.hash.slice(1).split('&');
 const requestedSalonStyleId = new URLSearchParams(hashParts.slice(1).join('&')).get('style');
+const BRAIDS_AND_NATURAL_TEMPLATE_IDS = new Set([
+  'female_long_box_braids',
+  'female_short_box_braids',
+  'female_halo_braid',
+  'female_fishtail_braid',
+  'male_dark_cornrows',
+  'male_short_box_braids',
+  'female_dark_wooly_curls',
+  'female_tight_curls',
+  'female_black_wet_look_curls',
+  'female_above_shoulder_coils',
+  'female_mid_length_curls',
+  'female_curly_bob',
+  'female_short_curly',
+  'female_bobcut_curly',
+  'female_curly_top_pixie',
+  'female_top_bun',
+  'female_messy_bun',
+  'male_dark_wooly_curls'
+]);
 
 function renderHairTemplates() {
   const grid = document.getElementById('hairStylesGrid');
@@ -183,8 +212,16 @@ function renderHairTemplates() {
   const matchesSearch = template => template.title?.toLowerCase().includes(query);
   const filteredSalonStyles = salonStyles.filter(matchesSearch);
   const filteredPresets = hairTemplates.filter(template => {
-    const categoryMatches = query.length > 0 || hairCategory === 'All' || template.category_name?.toLowerCase() === hairCategory.toLowerCase();
-    return categoryMatches && matchesSearch(template);
+    const filterMatches = query.length > 0 || (
+      hairCategory === 'Braids & natural'
+        ? BRAIDS_AND_NATURAL_TEMPLATE_IDS.has(template.id)
+        : hairCategory === 'All female'
+          ? template.category_name?.toLowerCase() === 'female'
+          : hairCategory === 'Male'
+            ? template.category_name?.toLowerCase() === 'male'
+            : true
+    );
+    return filterMatches && matchesSearch(template);
   });
   const filtered = [...filteredSalonStyles, ...filteredPresets];
   grid.replaceChildren();
@@ -329,12 +366,12 @@ function checkHairReady() {
 async function runHairTryOn() {
   const btn = document.getElementById('hairBtn');
   const status = document.getElementById('hairStatus');
+  const isSalonStyle = selectedStyle.source === 'salon';
   btn.disabled = true;
   btn.textContent = 'Working...';
   status.textContent = 'Working on it... this takes about 30 seconds';
 
   try {
-    const isSalonStyle = selectedStyle.source === 'salon';
     const requestBody = { imageBase64: hairPhotoBase64 };
     let route = '/youcam/hair';
     if (isSalonStyle) {
@@ -359,16 +396,26 @@ async function runHairTryOn() {
       const comparisonRange = document.getElementById('hairCompareRange');
       comparisonRange.value = 50;
       comparison.style.setProperty('--split', '50%');
+      const referenceImage = isSalonStyle ? selectedStyle.tryOnImage : selectedStyle.thumb;
+      document.getElementById('hairReferenceImage').src = new URL(referenceImage, window.location.href).href;
+      document.getElementById('hairReferenceName').textContent = selectedStyle.title || selectedStyle.name || '';
       document.getElementById('hairResultCard').style.display = 'block';
       const styleName = selectedStyle.title || selectedStyle.name || 'this hairstyle';
       document.getElementById('hairBookLink').href = 'https://wa.me/2348012345678?text=' + encodeURIComponent(`Hi! I saw the AI hairstyle try-on for ${styleName} and I want to book an appointment.`);
       status.textContent = 'Done! See your new look below.';
     } else {
-      status.textContent = data.error ? 'Error: ' + data.error : 'Error: No result returned.';
+      if (isSalonStyle) {
+        console.error('Hair transfer upstream response:', data);
+        status.textContent = "We couldn't build this style from your photo. Try a clearer front-facing photo or pick another style.";
+      } else {
+        status.textContent = data.error ? 'Error: ' + data.error : 'Error: No result returned.';
+      }
     }
   } catch(e) {
     console.error('Hair try-on request failed:', e);
-    status.textContent = 'Something went wrong. Please try again.';
+    status.textContent = isSalonStyle
+      ? "We couldn't build this style from your photo. Try a clearer front-facing photo or pick another style."
+      : 'Something went wrong. Please try again.';
   }
   btn.textContent = '✨ Try On This Style';
   checkHairReady();

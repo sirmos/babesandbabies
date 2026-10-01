@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Try-On — Babes & Babies</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #fff5f8; color: #1a1a2e; }
+    header { background: #e8447a; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+    header a { color: white; text-decoration: none; font-size: 14px; }
+    header h1 { color: white; font-size: 20px; flex: 1; text-align: center; }
+    .container { max-width: 600px; margin: 32px auto; padding: 0 16px; }
+    .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    h2 { font-size: 18px; margin-bottom: 8px; color: #e8447a; }
+    p { font-size: 14px; color: #555; margin-bottom: 16px; line-height: 1.6; }
+    .upload-area { border: 2px dashed #e8447a; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; background: #fff0f5; margin-bottom: 16px; }
+    .upload-area:hover { background: #ffe0ec; }
+    .upload-area input { display: none; }
+    .upload-area img { max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 12px; }
+    .upload-label { font-size: 14px; color: #e8447a; font-weight: bold; }
+    .styles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+    .style-btn { border: 2px solid #eee; border-radius: 10px; padding: 12px; cursor: pointer; text-align: center; font-size: 13px; background: white; transition: all 0.2s; }
+    .style-btn:hover { border-color: #e8447a; background: #fff0f5; }
+    .style-btn.selected { border-color: #e8447a; background: #fff0f5; color: #e8447a; font-weight: bold; }
+    .btn { width: 100%; padding: 14px; background: #e8447a; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+    .btn:hover { background: #c73366; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .result-img { width: 100%; border-radius: 12px; margin-top: 16px; }
+    .status { font-size: 14px; color: #555; text-align: center; margin-top: 12px; min-height: 20px; }
+    .badge { display: inline-block; background: #e8447a; color: white; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+    .tab-btns { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 10px; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; font-size: 14px; font-weight: bold; color: #555; }
+    .tab-btn.active { border-color: #e8447a; color: #e8447a; background: #fff0f5; }
+    .section { display: none; }
+    .section.active { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html">← Back</a>
+  <h1>✨ AI Try-On <span class="badge">Powered by YouCam</span></h1>
+</header>
+
+<div class="container">
+
+  <div class="tab-btns">
+    <button class="tab-btn active" onclick="switchTab('hair')">💇 Hair Try-On</button>
+    <button class="tab-btn" onclick="switchTab('skin')">🌿 Skin Analysis</button>
+  </div>
+
+  <!-- HAIR TRY-ON -->
+  <div id="hair-section" class="section active">
+    <div class="card">
+      <h2>AI Hair Try-On</h2>
+      <p>Upload your photo and see how any of our hairstyles looks on you before booking!</p>
+
+      <div class="upload-area" onclick="document.getElementById('hairPhoto').click()">
+        <div class="upload-label">📷 Tap to upload your photo</div>
+        <p style="font-size:12px;margin-top:4px;">Clear front-facing photo works best</p>
+        <input type="file" id="hairPhoto" accept="image/*" onchange="previewHair(event)" />
+        <img id="hairPreview" src="" style="display:none;" />
+      </div>
+
+      <p style="font-weight:bold;margin-bottom:8px;">Choose a hairstyle:</p>
+      <div class="styles-grid" id="hairStylesGrid"></div>
+
+      <button class="btn" id="hairBtn" onclick="runHairTryOn()" disabled>✨ Try On This Style</button>
+      <div class="status" id="hairStatus"></div>
+    </div>
+
+    <div class="card" id="hairResultCard" style="display:none;">
+      <h2>Your New Look!</h2>
+      <img id="hairResult" class="result-img" src="" alt="Hair try-on result" />
+      <a href="https://wa.me/2348012345678?text=Hi! I saw the AI hairstyle try-on and I want to book an appointment" target="_blank">
+        <button class="btn" style="margin-top:16px;">📱 Book This Style on WhatsApp</button>
+      </a>
+    </div>
+  </div>
+
+  <!-- SKIN ANALYSIS -->
+  <div id="skin-section" class="section">
+    <div class="card">
+      <h2>AI Skin Analysis</h2>
+      <p>Upload a clear selfie and our AI will analyse your skin and recommend the right products from our baby skincare range.</p>
+
+      <div class="upload-area" onclick="document.getElementById('skinPhoto').click()">
+        <div class="upload-label">📷 Tap to upload your selfie</div>
+        <p style="font-size:12px;margin-top:4px;">No makeup, good lighting, face forward</p>
+        <input type="file" id="skinPhoto" accept="image/*" onchange="previewSkin(event)" />
+        <img id="skinPreview" src="" style="display:none;" />
+      </div>
+
+      <button class="btn" id="skinBtn" onclick="runSkinAnalysis()" disabled>🔍 Analyse My Skin</button>
+      <div class="status" id="skinStatus"></div>
+    </div>
+
+    <div class="card" id="skinResultCard" style="display:none;">
+      <h2>Your Skin Report</h2>
+      <div id="skinScores"></div>
+      <div id="skinRec" style="margin-top:16px;"></div>
+      <a href="https://wa.me/2348012345678?text=Hi! I just did the AI skin analysis and I want to order skincare products" target="_blank">
+        <button class="btn" style="margin-top:16px;">📱 Order Products on WhatsApp</button>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const WORKER_URL = 'https://babesandbabies-chat.babesandbabies.workers.dev';
+
+const hairstyles = [
+  { name: 'Cornrow updo', id: 'cornrow_updo' },
+  { name: 'Close cornrows', id: 'close_cornrows' },
+  { name: 'Knotless box braids', id: 'knotless_box' },
+  { name: 'Stitch braids', id: 'stitch_braids' },
+  { name: 'Ghana braids', id: 'ghana_braids' },
+  { name: 'Fulani braids', id: 'fulani_braids' },
+];
+
+let selectedStyle = null;
+let hairPhotoBase64 = null;
+let skinPhotoBase64 = null;
+
+// Render hairstyle buttons
+const grid = document.getElementById('hairStylesGrid');
+hairstyles.forEach(s => {
+  const btn = document.createElement('button');
+  btn.className = 'style-btn';
+  btn.textContent = s.name;
+  btn.onclick = () => {
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedStyle = s;
+    checkHairReady();
+  };
+  grid.appendChild(btn);
+});
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(tab + '-section').classList.add('active');
+  event.target.classList.add('active');
+}
+
+function previewHair(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('hairPreview').src = ev.target.result;
+    document.getElementById('hairPreview').style.display = 'block';
+    hairPhotoBase64 = ev.target.result.split(',')[1];
+    checkHairReady();
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewSkin(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('skinPreview').src = ev.target.result;
+    document.getElementById('skinPreview').style.display = 'block';
+    skinPhotoBase64 = ev.target.result.split(',')[1];
+    document.getElementById('skinBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function checkHairReady() {
+  document.getElementById('hairBtn').disabled = !(hairPhotoBase64 && selectedStyle);
+}
+
+async function runHairTryOn() {
+  const btn = document.getElementById('hairBtn');
+  const status = document.getElementById('hairStatus');
+  btn.disabled = true;
+  status.textContent = 'Uploading your photo...';
+
+  try {
+    const res = await fetch(WORKER_URL + '/youcam/hair', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: hairPhotoBase64, styleId: selectedStyle.id })
+    });
+    const data = await res.json();
+
+    if (data.resultUrl) {
+      document.getElementById('hairResult').src = data.resultUrl;
+      document.getElementById('hairResultCard').style.display = 'block';
+      status.textContent = 'Done! See your new look below.';
+    } else {
+      status.textContent = 'Error: ' + (data.error || 'Something went wrong. Please try again.');
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+async function runSkinAnalysis() {
+  const btn = document.getElementById('skinBtn');
+  const status = document.getElementById('skinStatus');
+  btn.disabled = true;
+  status.textContent = 'Analysing your skin...';
+
+  try {
+    const res = await fetch(WORKER_URL + '/youcam/skin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: skinPhotoBase64 })
+    });
+    const data = await res.json();
+
+    if (data.scores) {
+      const scoreDiv = document.getElementById('skinScores');
+      scoreDiv.innerHTML = Object.entries(data.scores).map(([k, v]) => `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
+          <span style="text-transform:capitalize;">${k.replace(/_/g,' ')}</span>
+          <span style="font-weight:bold;color:${v >= 70 ? '#2a9d8f' : '#e8447a'};">${v}/100</span>
+        </div>
+      `).join('');
+
+      document.getElementById('skinRec').innerHTML = `
+        <p style="font-weight:bold;margin-bottom:8px;">Recommended products for you:</p>
+        <p>${data.recommendation}</p>
+      `;
+      document.getElementById('skinResultCard').style.display = 'block';
+      status.textContent = 'Analysis complete!';
+    } else {
+      status.textContent = 'Error: ' + (data.error || 'Something went wrong. Please try again.');
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Babes & Babies PayPal Sandbox</title>
+    <style>
+      :root {
+        --pink-100: #fff1f5;
+        --pink-200: #ffd8e3;
+        --pink-400: #f7a8c0;
+        --pink-500: #eb7fa2;
+        --pink-700: #bd4b73;
+        --ink: #301d2d;
+        --card: #fff9fb;
+        --muted: #6b4a5b;
+        --success: #156d4c;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, var(--pink-100), #fff);
+        color: var(--ink);
+      }
+
+      .wrap {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--pink-200);
+        border-radius: 18px;
+        box-shadow: 0 14px 32px rgba(189, 75, 115, 0.12);
+        padding: 20px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(1.8rem, 3vw, 2.7rem);
+      }
+
+      .lead {
+        margin: 0 0 20px;
+        color: var(--muted);
+      }
+
+      .catalog {
+        display: grid;
+        gap: 12px;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--pink-200);
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--pink-700);
+      }
+
+      .meta strong {
+        display: block;
+        font-size: 1rem;
+      }
+
+      .meta span {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .qty {
+        min-width: 70px;
+        border: 1px solid var(--pink-300);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 0.95rem;
+      }
+
+      .summary {
+        margin-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--pink-200);
+        font-weight: 700;
+      }
+
+      .total {
+        font-size: 1.35rem;
+        color: var(--pink-700);
+      }
+
+      .button-wrap {
+        margin-top: 20px;
+        min-height: 52px;
+      }
+
+      .status {
+        min-height: 28px;
+        margin-top: 16px;
+        color: var(--success);
+        font-weight: 700;
+      }
+
+      .note {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      @media (max-width: 560px) {
+        .item {
+          grid-template-columns: auto 1fr;
+        }
+
+        .qty {
+          grid-column: 2;
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Babes & Babies checkout</h1>
+        <p class="lead">Choose products and pay securely in PayPal Sandbox.</p>
+
+        <div id="catalog" class="catalog" aria-live="polite"></div>
+
+        <div class="summary">
+          <span>Total</span>
+          <span id="total" class="total">$0.00</span>
+        </div>
+
+        <div id="paypal-button-container" class="button-wrap"></div>
+        <div id="status" class="status" aria-live="polite"></div>
+        <div class="note">The Client ID comes from the Worker at /paypal/config. No secret is exposed.</div>
+      </div>
+    </div>
+
+    <script>
+      const state = {
+        catalog: [],
+        clientId: '',
+        paypalReady: false
+      };
+
+      const catalogEl = document.getElementById('catalog');
+      const totalEl = document.getElementById('total');
+      const statusEl = document.getElementById('status');
+      const paypalContainer = document.getElementById('paypal-button-container');
+
+      function money(value) {
+        return Number(value || 0).toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        });
+      }
+
+      function renderCatalog() {
+        if (!state.catalog.length) {
+          catalogEl.innerHTML = '<p>Loading catalogue…</p>';
+          return;
+        }
+
+        catalogEl.innerHTML = state.catalog.map((item) => `
+          <label class="item">
+            <input type="checkbox" value="${item.id}" data-id="${item.id}" class="item-check" />
+            <span class="meta">
+              <strong>${item.name}</strong>
+              <span>${item.description} · ${item.type}</span>
+            </span>
+            <select class="qty" data-for="${item.id}" aria-label="Quantity for ${item.name}">
+              ${[1,2,3,4,5,6,7,8,9,10].map((qty) => `<option value="${qty}">${qty}</option>`).join('')}
+            </select>
+          </label>
+        `).join('');
+
+        catalogEl.querySelectorAll('.item-check').forEach((checkbox) => {
+          checkbox.addEventListener('change', updateTotal);
+        });
+
+        catalogEl.querySelectorAll('.qty').forEach((select) => {
+          select.disabled = true;
+          select.addEventListener('change', updateTotal);
+        });
+
+        updateTotal();
+      }
+
+      function getSelectedItems() {
+        return Array.from(document.querySelectorAll('.item-check:checked')).map((checkbox) => {
+          const id = checkbox.value;
+          const qty = Number(document.querySelector(`.qty[data-for="${id}"]`)?.value || 1);
+          return { id, qty };
+        });
+      }
+
+      function updateTotal() {
+        const selected = getSelectedItems();
+        const lookup = new Map(state.catalog.map((item) => [item.id, item]));
+        const total = selected.reduce((sum, item) => {
+          const match = lookup.get(item.id);
+          const unit = Number(match?.price || 0);
+          return sum + (unit * Number(item.qty || 1));
+        }, 0);
+        totalEl.textContent = money(total);
+
+        document.querySelectorAll('.qty').forEach((select) => {
+          const id = select.dataset.for;
+          const checkbox = document.querySelector(`.item-check[value="${id}"]`);
+          select.disabled = !(checkbox && checkbox.checked);
+        });
+      }
+
+      async function loadCatalogAndConfig() {
+        const [catalogRes, configRes] = await Promise.all([
+          fetch('/shop/catalog'),
+          fetch('/paypal/config')
+        ]);
+
+        if (!catalogRes.ok || !configRes.ok) {
+          throw new Error('Failed to load the shop catalogue or PayPal config');
+        }
+
+        state.catalog = await catalogRes.json();
+        state.clientId = (await configRes.json()).clientId;
+        renderCatalog();
+        loadPayPalSdk();
+      }
+
+      function loadPayPalSdk() {
+        if (!state.clientId || state.paypalReady) return;
+        const script = document.createElement('script');
+        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(state.clientId)}&currency=USD&components=buttons`;
+        script.onload = () => {
+          if (!window.paypal) {
+            statusEl.textContent = 'PayPal JS SDK did not load.';
+            return;
+          }
+          state.paypalReady = true;
+          window.paypal.Buttons({
+            style: {
+              layout: 'vertical',
+              color: 'gold',
+              shape: 'pill',
+              label: 'paypal'
+            },
+            createOrder: async function() {
+              const items = getSelectedItems();
+              if (!items.length) {
+                statusEl.textContent = 'Select at least one item before paying.';
+                throw new Error('No item selected');
+              }
+
+              const response = await fetch('/paypal/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items, note: 'Babes & Babies purchase' })
+              });
+
+              const data = await response.json();
+              if (!response.ok) {
+                throw new Error(data.error || 'Unable to create PayPal order');
+              }
+              return data.orderId;
+            },
+            onApprove: async function(data) {
+              const response = await fetch('/paypal/capture-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: data.orderID })
+              });
+
+              const result = await response.json();
+              if (!response.ok) {
+                throw new Error(result.error || 'Payment capture failed');
+              }
+
+              statusEl.textContent = `Payment captured: ${money(result.amount)} · ${result.payerName}`;
+            },
+            onError: function(err) {
+              statusEl.textContent = err?.message || 'PayPal checkout failed.';
+            }
+          }).render('#paypal-button-container');
+        };
+        document.head.appendChild(script);
+      }
+
+      loadCatalogAndConfig().catch((error) => {
+        statusEl.textContent = error.message || 'Unable to load the checkout page.';
+      });
+    </script>
+  </body>
+</html>

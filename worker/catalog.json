@@ -1,0 +1,58 @@
+[
+  {
+    "id": "baby_lotion",
+    "name": "Baby lotion",
+    "price": "5.00",
+    "type": "product",
+    "description": "Gentle everyday lotion for soft, hydrated skin."
+  },
+  {
+    "id": "bath_gel",
+    "name": "Bath gel",
+    "price": "6.00",
+    "type": "product",
+    "description": "Mild cleansing bath gel for daily use."
+  },
+  {
+    "id": "baby_powder",
+    "name": "Baby powder",
+    "price": "4.50",
+    "type": "product",
+    "description": "Lightweight powder for a fresh, dry feel."
+  },
+  {
+    "id": "petroleum_jelly",
+    "name": "Petroleum jelly",
+    "price": "3.50",
+    "type": "product",
+    "description": "Versatile skin barrier cream for dry areas."
+  },
+  {
+    "id": "baby_shampoo",
+    "name": "Baby shampoo",
+    "price": "5.50",
+    "type": "product",
+    "description": "Mild shampoo for gentle cleansing."
+  },
+  {
+    "id": "baby_oil",
+    "name": "Baby oil",
+    "price": "4.00",
+    "type": "product",
+    "description": "Lightweight oil to help lock in moisture."
+  },
+  {
+    "id": "diaper_rash_cream",
+    "name": "Diaper rash cream",
+    "price": "7.00",
+    "type": "product",
+    "description": "Soothing cream for protection and comfort."
+  },
+  {
+    "id": "booking_deposit",
+    "name": "Hair booking deposit",
+    "price": "20.00",
+    "type": "service",
+    "description": "Booking deposit for salon styling and appointment scheduling."
+  }
+]

@@ -1,9 +1,105 @@
+import catalog from './catalog.json';
+
+const paypalTokenCache = {
+  token: null,
+  expiresAt: 0
+};
+
+const getPayPalBaseUrl = (env) => env.PAYPAL_ENV === 'live'
+  ? 'https://api-m.paypal.com'
+  : 'https://api-m.sandbox.paypal.com';
+
+const jsonResponse = (body, status = 200, extraHeaders = {}) => new Response(JSON.stringify(body), {
+  status,
+  headers: {
+    ...extraHeaders,
+    ...{
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, PayPal-Request-Id',
+      'Content-Type': 'application/json'
+    }
+  }
+});
+
+async function getPayPalAccessToken(env) {
+  if (paypalTokenCache.token && Date.now() < paypalTokenCache.expiresAt - 30_000) {
+    return paypalTokenCache.token;
+  }
+
+  const clientId = env.PAYPAL_CLIENT_ID;
+  const clientSecret = env.PAYPAL_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('PayPal credentials are not configured');
+  }
+
+  const baseUrl = getPayPalBaseUrl(env);
+  const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'grant_type=client_credentials'
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.access_token) {
+    console.error('PayPal OAuth upstream response:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: data
+    });
+    throw new Error('PayPal authentication failed');
+  }
+
+  paypalTokenCache.token = data.access_token;
+  paypalTokenCache.expiresAt = Date.now() + (Number(data.expires_in) || 300) * 1000;
+  return paypalTokenCache.token;
+}
+
+function validateCatalogItems(items) {
+  const catalogMap = new Map(catalog.map((entry) => [entry.id, entry]));
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error('Missing items');
+  }
+  if (items.length > 10) {
+    throw new Error('Maximum 10 line items');
+  }
+
+  const normalizedItems = [];
+  for (const item of items) {
+    const itemId = typeof item?.id === 'string' ? item.id.trim() : '';
+    const qty = Number(item?.qty);
+
+    if (!itemId || !catalogMap.has(itemId)) {
+      throw new Error(`Unknown product id: ${itemId || 'missing'}`);
+    }
+    if (!Number.isInteger(qty) || qty < 1 || qty > 10) {
+      throw new Error(`Invalid quantity for ${itemId}`);
+    }
+
+    const product = catalogMap.get(itemId);
+    normalizedItems.push({
+      id: itemId,
+      name: product.name,
+      description: product.description,
+      qty,
+      price: Number(product.price),
+      lineTotal: Number(product.price) * qty
+    });
+  }
+
+  return normalizedItems;
+}
+
 export default {
   async fetch(request, env) {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, PayPal-Request-Id',
     };
 
     if (request.method === 'OPTIONS') {
@@ -14,6 +110,171 @@ export default {
     const path = url.pathname;
 
     try {
+      if (path === '/shop/catalog' && request.method === 'GET') {
+        return jsonResponse(
+          catalog.map(({ id, name, price, type, description }) => ({ id, name, price, type, description })),
+          200,
+          corsHeaders
+        );
+      }
+
+      if (path === '/paypal/config' && request.method === 'GET') {
+        if (!env.PAYPAL_CLIENT_ID) {
+          return jsonResponse({ error: 'PayPal client ID is not configured' }, 500, corsHeaders);
+        }
+        return jsonResponse({ clientId: env.PAYPAL_CLIENT_ID }, 200, corsHeaders);
+      }
+
+      if (path === '/paypal/create-order' && request.method === 'POST') {
+        let payload;
+        try {
+          payload = await request.json();
+        } catch (error) {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400, corsHeaders);
+        }
+
+        let normalizedItems;
+        try {
+          normalizedItems = validateCatalogItems(payload?.items || []);
+        } catch (error) {
+          return jsonResponse({ error: error.message }, 400, corsHeaders);
+        }
+
+        const subtotal = normalizedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+        const total = subtotal.toFixed(2);
+        const orderNote = typeof payload?.note === 'string' && payload.note.trim() ? payload.note.trim() : '';
+
+        const accessToken = await getPayPalAccessToken(env);
+        const baseUrl = getPayPalBaseUrl(env);
+        const requestId = crypto.randomUUID();
+        const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'PayPal-Request-Id': requestId
+          },
+          body: JSON.stringify({
+            intent: 'CAPTURE',
+            purchase_units: [{
+              reference_id: 'babes-and-babies-order',
+              description: orderNote || 'Babes & Babies checkout',
+              amount: {
+                currency_code: 'USD',
+                value: total,
+                breakdown: {
+                  item_total: {
+                    currency_code: 'USD',
+                    value: normalizedItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)
+                  }
+                }
+              },
+              items: normalizedItems.map((item) => ({
+                name: item.name,
+                description: item.description,
+                quantity: String(item.qty),
+                unit_amount: {
+                  currency_code: 'USD',
+                  value: item.price.toFixed(2)
+                },
+                category: 'PHYSICAL_GOODS'
+              }))
+            }],
+            application_context: {
+              brand_name: 'Babes & Babies',
+              landing_page: 'NO_PREFERENCE',
+              user_action: 'PAY_NOW',
+              shipping_preference: 'NO_SHIPPING'
+            }
+          })
+        });
+
+        const responseText = await response.text();
+        let responseBody;
+        try {
+          responseBody = JSON.parse(responseText);
+        } catch (error) {
+          responseBody = { raw: responseText };
+        }
+
+        if (!response.ok || !responseBody.id) {
+          console.error('PayPal create-order upstream response:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: responseBody
+          });
+          return jsonResponse({ error: 'Order creation failed' }, 502, corsHeaders);
+        }
+
+        return jsonResponse({
+          orderId: responseBody.id,
+          total,
+          items: normalizedItems.map((item) => ({
+            id: item.id,
+            name: item.name,
+            qty: item.qty,
+            total: item.lineTotal.toFixed(2)
+          }))
+        }, 200, corsHeaders);
+      }
+
+      if (path === '/paypal/capture-order' && request.method === 'POST') {
+        let payload;
+        try {
+          payload = await request.json();
+        } catch (error) {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400, corsHeaders);
+        }
+
+        const orderId = typeof payload?.orderId === 'string' ? payload.orderId.trim() : '';
+        if (!orderId) {
+          return jsonResponse({ error: 'Missing orderId' }, 400, corsHeaders);
+        }
+
+        const accessToken = await getPayPalAccessToken(env);
+        const baseUrl = getPayPalBaseUrl(env);
+        const response = await fetch(`${baseUrl}/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const responseText = await response.text();
+        let responseBody;
+        try {
+          responseBody = JSON.parse(responseText);
+        } catch (error) {
+          responseBody = { raw: responseText };
+        }
+
+        if (!response.ok) {
+          console.error('PayPal capture-order upstream response:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: responseBody
+          });
+          return jsonResponse({ error: 'Capture failed' }, 502, corsHeaders);
+        }
+
+        const capture = responseBody.purchase_units?.[0]?.payments?.captures?.[0];
+        const amount = capture?.amount?.value || '0.00';
+        const payerName = [
+          responseBody.payer?.name?.given_name,
+          responseBody.payer?.name?.surname
+        ].filter(Boolean).join(' ') || 'PayPal customer';
+
+        return jsonResponse({
+          status: responseBody.status || 'UNKNOWN',
+          orderId,
+          amount,
+          payerName
+        }, 200, corsHeaders);
+      }
+
       // Existing Gemini chat
       if (path === '/' || path === '') {
         const { systemPrompt, history, userMsg } = await request.json();
@@ -215,7 +476,6 @@ export default {
         });
       }
 
-      // YouCam Skin Analysis
       if (path === '/youcam/skin') {
         const { imageBase64 } = await request.json();
         const apiKey = env.YOUCAM_API_KEY;
@@ -281,7 +541,6 @@ export default {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
-        // Step 5 - Get product recommendation from Gemini
         let recommendation = '';
         let recommendationError;
         if (scores) {
@@ -338,10 +597,8 @@ export default {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
 
-    } catch(e) {
-      return new Response(JSON.stringify({ error: e.message }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    } catch (error) {
+      return jsonResponse({ error: error.message }, 500, corsHeaders);
     }
   }
 };

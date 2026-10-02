@@ -12,7 +12,7 @@
         --pink-500: #eb7fa2;
         --pink-700: #bd4b73;
         --ink: #301d2d;
-        --card: #fff9fb;
+        --card: #fff;
         --muted: #6b4a5b;
         --success: #156d4c;
       }
@@ -24,6 +24,30 @@
         font-family: Arial, sans-serif;
         background: linear-gradient(180deg, var(--pink-100), #fff);
         color: var(--ink);
+      }
+
+      .site-header {
+        background: #e8447a;
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        min-height: 52px;
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+
+      .back-link {
+        color: #fff;
+        font-size: 0.9rem;
+        text-decoration: none;
+      }
+
+      .back-link:hover,
+      .back-link:focus-visible {
+        text-decoration: underline;
       }
 
       .wrap {
@@ -70,11 +94,13 @@
         position: relative;
         display: grid;
         place-items: center;
-        width: 72px;
-        height: 72px;
+        width: 80px;
+        height: 80px;
         overflow: hidden;
-        border-radius: 6px;
-        background: var(--pink-100);
+        border: 1px solid #f0d4de;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 3px 8px rgba(90, 38, 58, 0.12);
         color: var(--muted);
         font-size: 0.68rem;
         text-align: center;
@@ -86,7 +112,7 @@
         width: 100%;
         height: 100%;
         background: #fff;
-        object-fit: contain;
+        object-fit: cover;
       }
 
       .product-image[hidden],
@@ -180,14 +206,47 @@
         font-size: 0.8rem;
       }
 
+      .payment-note {
+        margin: 18px 0 -8px;
+        color: #777;
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .confirmation {
+        padding: 20px 8px 8px;
+        text-align: center;
+      }
+
+      .confirmation h2 {
+        margin: 0 0 8px;
+        color: var(--success);
+        font-size: 1.25rem;
+      }
+
+      .confirmation-amount {
+        margin: 0 0 18px;
+        color: var(--ink);
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .confirmation-links {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .confirmation-links a {
+        color: var(--pink-700);
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
       @media (max-width: 560px) {
         .item {
-          grid-template-columns: 20px 56px minmax(0, 1fr);
-        }
-
-        .thumbnail {
-          width: 56px;
-          height: 56px;
+          grid-template-columns: 20px 80px minmax(0, 1fr);
         }
 
         .qty {
@@ -195,9 +254,25 @@
           width: 100%;
         }
       }
+
+      @media (max-width: 399.98px) {
+        .item {
+          grid-template-columns: 20px 64px minmax(0, 1fr);
+        }
+
+        .thumbnail {
+          width: 64px;
+          height: 64px;
+        }
+      }
     </style>
   </head>
   <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="back-link" href="index.html">← Back to Babes &amp; Babies</a>
+      </div>
+    </header>
     <div class="wrap">
       <div class="card">
         <h1>Babes & Babies checkout</h1>
@@ -210,13 +285,21 @@
           <span id="total" class="total">$0.00</span>
         </div>
 
+        <p id="payment-note" class="payment-note">Test mode: payments run in the PayPal Sandbox, so no real money is charged.</p>
         <div class="button-wrap">
           <button id="pick-item-button" class="pick-item-button" type="button" disabled>Pick an item to pay.</button>
           <div id="paypal-button-container" hidden></div>
         </div>
         <div id="status" class="status" aria-live="polite"></div>
         <div id="error-detail" class="error-detail" aria-live="polite"></div>
-        <div class="note">The Client ID comes from the Worker at /paypal/config. No secret is exposed.</div>
+        <section id="confirmation" class="confirmation" aria-live="polite" hidden>
+          <h2>Payment received</h2>
+          <p class="confirmation-amount">Amount paid: <span id="confirmation-amount"></span></p>
+          <nav class="confirmation-links" aria-label="After payment">
+            <a href="index.html">Back to Babes &amp; Babies</a>
+            <a id="continue-shopping" href="#catalog">Continue shopping</a>
+          </nav>
+        </section>
       </div>
     </div>
 
@@ -236,6 +319,33 @@
       const errorDetailEl = document.getElementById('error-detail');
       const paypalContainer = document.getElementById('paypal-button-container');
       const pickItemButton = document.getElementById('pick-item-button');
+      const summaryEl = document.querySelector('.summary');
+      const buttonWrap = document.querySelector('.button-wrap');
+      const paymentNoteEl = document.getElementById('payment-note');
+      const confirmationEl = document.getElementById('confirmation');
+      const confirmationAmountEl = document.getElementById('confirmation-amount');
+
+      document.getElementById('continue-shopping').addEventListener('click', (event) => {
+        event.preventDefault();
+        document.querySelectorAll('.item-check').forEach((checkbox) => {
+          checkbox.checked = false;
+        });
+        document.querySelectorAll('.qty').forEach((select) => {
+          select.value = '1';
+          select.disabled = true;
+        });
+        confirmationEl.hidden = true;
+        catalogEl.hidden = false;
+        summaryEl.hidden = false;
+        paymentNoteEl.hidden = false;
+        buttonWrap.hidden = false;
+        statusEl.textContent = '';
+        errorDetailEl.textContent = '';
+        errorDetailEl.style.display = 'none';
+        statusEl.style.color = 'var(--success)';
+        updateTotal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
 
       function setError(message, url, errorText) {
         statusEl.textContent = message;
@@ -422,7 +532,14 @@
 
               statusEl.style.color = 'var(--success)';
               errorDetailEl.textContent = '';
-              statusEl.textContent = `Payment captured: ${money(result.amount)} · ${result.payerName}`;
+              errorDetailEl.style.display = 'none';
+              statusEl.textContent = '';
+              confirmationAmountEl.textContent = money(result.amount);
+              confirmationEl.hidden = false;
+              catalogEl.hidden = true;
+              summaryEl.hidden = true;
+              paymentNoteEl.hidden = true;
+              buttonWrap.hidden = true;
             },
             onError: function(err) {
               setError(err?.message || 'PayPal checkout failed.', '', '');

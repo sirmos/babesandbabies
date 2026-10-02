@@ -118,6 +118,15 @@
         font-weight: 700;
       }
 
+      .error-detail {
+        display: block;
+        margin-top: 8px;
+        color: #5d5d5d;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+
       .note {
         margin-top: 12px;
         color: var(--muted);
@@ -151,11 +160,14 @@
 
         <div id="paypal-button-container" class="button-wrap"></div>
         <div id="status" class="status" aria-live="polite"></div>
+        <div id="error-detail" class="error-detail" aria-live="polite"></div>
         <div class="note">The Client ID comes from the Worker at /paypal/config. No secret is exposed.</div>
       </div>
     </div>
 
     <script>
+      const WORKER_URL = 'https://babesandbabies-chat.babesandbabies.workers.dev';
+
       const state = {
         catalog: [],
         clientId: '',
@@ -165,7 +177,17 @@
       const catalogEl = document.getElementById('catalog');
       const totalEl = document.getElementById('total');
       const statusEl = document.getElementById('status');
+      const errorDetailEl = document.getElementById('error-detail');
       const paypalContainer = document.getElementById('paypal-button-container');
+
+      function setError(message, url, errorText) {
+        statusEl.textContent = message;
+        statusEl.style.color = '#b00020';
+        const detail = [url, errorText].filter(Boolean).join(' — ');
+        errorDetailEl.textContent = detail;
+        errorDetailEl.style.display = detail ? 'block' : 'none';
+        console.error(message, url || '', errorText || '');
+      }
 
       function money(value) {
         return Number(value || 0).toLocaleString('en-US', {
@@ -232,11 +254,16 @@
 
       async function loadCatalogAndConfig() {
         const [catalogRes, configRes] = await Promise.all([
-          fetch('/shop/catalog'),
-          fetch('/paypal/config')
+          fetch(`${WORKER_URL}/shop/catalog`),
+          fetch(`${WORKER_URL}/paypal/config`)
         ]);
 
         if (!catalogRes.ok || !configRes.ok) {
+          const catalogText = await catalogRes.text().catch(() => '');
+          const configText = await configRes.text().catch(() => '');
+          const failedUrl = !catalogRes.ok ? `${WORKER_URL}/shop/catalog` : `${WORKER_URL}/paypal/config`;
+          const failedText = !catalogRes.ok ? catalogText || catalogRes.statusText : configText || configRes.statusText;
+          setError('Failed to load the shop catalogue or PayPal config', failedUrl, failedText);
           throw new Error('Failed to load the shop catalogue or PayPal config');
         }
 
@@ -270,7 +297,8 @@
                 throw new Error('No item selected');
               }
 
-              const response = await fetch('/paypal/create-order', {
+              const url = `${WORKER_URL}/paypal/create-order`;
+              const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items, note: 'Babes & Babies purchase' })
@@ -278,12 +306,14 @@
 
               const data = await response.json();
               if (!response.ok) {
+                setError('Unable to create PayPal order', url, data.error || response.statusText);
                 throw new Error(data.error || 'Unable to create PayPal order');
               }
               return data.orderId;
             },
             onApprove: async function(data) {
-              const response = await fetch('/paypal/capture-order', {
+              const url = `${WORKER_URL}/paypal/capture-order`;
+              const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId: data.orderID })
@@ -291,13 +321,16 @@
 
               const result = await response.json();
               if (!response.ok) {
+                setError('Payment capture failed', url, result.error || response.statusText);
                 throw new Error(result.error || 'Payment capture failed');
               }
 
+              statusEl.style.color = 'var(--success)';
+              errorDetailEl.textContent = '';
               statusEl.textContent = `Payment captured: ${money(result.amount)} · ${result.payerName}`;
             },
             onError: function(err) {
-              statusEl.textContent = err?.message || 'PayPal checkout failed.';
+              setError(err?.message || 'PayPal checkout failed.', '', '');
             }
           }).render('#paypal-button-container');
         };
@@ -305,7 +338,7 @@
       }
 
       loadCatalogAndConfig().catch((error) => {
-        statusEl.textContent = error.message || 'Unable to load the checkout page.';
+        setError(error.message || 'Unable to load the checkout page.', '', '');
       });
     </script>
   </body>

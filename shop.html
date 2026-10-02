@@ -319,6 +319,8 @@
       .checkout-area { padding: 0 16px 16px; }
       .checkout-prompt { margin: 0 0 12px; color: var(--green); font-weight: 700; }
       .checkout-prompt[hidden], #paypal-button-container[hidden] { display: none; }
+      .try-style-link { display: inline-block; margin-bottom: 10px; color: var(--pink-dark); font-size: 0.84rem; font-weight: 700; }
+      .try-style-link[hidden] { display: none; }
       .payment-note { margin: 10px 0 0; color: var(--muted); font-size: 0.76rem; line-height: 1.45; }
 
       .confirmation {
@@ -433,6 +435,7 @@
             </div>
             <div id="checkout-area" class="checkout-area">
               <p id="checkout-prompt" class="checkout-prompt" hidden>Review your cart, then pay with PayPal</p>
+              <a id="try-style-link" class="try-style-link" href="tryon.html#hair" hidden>Try this style on first</a>
               <div id="paypal-button-container" hidden></div>
               <p class="payment-note">Test mode: payments run in the PayPal Sandbox, so no real money is charged.</p>
               <p id="payment-status" class="status" role="status" aria-live="polite"></p>
@@ -478,6 +481,7 @@
       const cartTotalElement = document.getElementById('cart-total');
       const cartCountElement = document.getElementById('cart-count');
       const checkoutPrompt = document.getElementById('checkout-prompt');
+      const tryStyleLink = document.getElementById('try-style-link');
       const paypalContainer = document.getElementById('paypal-button-container');
       const paymentStatus = document.getElementById('payment-status');
       const confirmation = document.getElementById('confirmation');
@@ -511,7 +515,7 @@
               if (context) return context;
             }
             const fromParams = cleanContext({
-              style: params.get('style') || '',
+              style: params.get('context.style') || params.get('style') || '',
               skin: params.has('skin') ? JSON.parse(params.get('skin')) : undefined
             });
             if (fromParams) return fromParams;
@@ -649,6 +653,7 @@
         }
 
         checkoutPrompt.hidden = !state.readyForCheckout || state.total <= 0;
+        tryStyleLink.hidden = !state.note;
         paypalContainer.hidden = !state.readyForCheckout || state.total <= 0;
         if (state.readyForCheckout && state.total > 0) {
           renderPayPalButtons();
@@ -681,7 +686,7 @@
           const response = await fetch(`${WORKER_URL}/agent/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: state.messages.slice(-10), cart: state.cart.map(({ id, qty }) => ({ id, qty })), context: state.context })
+            body: JSON.stringify({ messages: state.messages.slice(-10), cart: state.cart.map(({ id, qty }) => ({ id, qty })), context: state.context, note: state.note })
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(data.error || 'The shop assistant could not reply just now. Please try again.');

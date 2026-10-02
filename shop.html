@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e8447a" />
+    <title>Shop with Babes &amp; Babies</title>
+    <style>
+      :root {
+        --pink: #e8447a;
+        --pink-dark: #a82d59;
+        --pink-pale: #fff0f5;
+        --rose-line: #f0c5d3;
+        --ink: #34212b;
+        --muted: #765d68;
+        --paper: #fffdfd;
+        --green: #21634b;
+        --red: #a52b36;
+        --shadow: 0 12px 32px rgba(92, 37, 59, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--ink);
+        background-color: #fff8fa;
+        background-image: linear-gradient(rgba(232, 68, 122, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(232, 68, 122, 0.035) 1px, transparent 1px);
+        background-size: 28px 28px;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      }
+
+      button, input { font: inherit; }
+      button, a { -webkit-tap-highlight-color: transparent; }
+
+      .site-header {
+        background: var(--pink);
+        color: #fff;
+      }
+
+      .header-inner {
+        width: min(1180px, 100%);
+        min-height: 54px;
+        margin: 0 auto;
+        padding: 0 18px;
+        display: flex;
+        align-items: center;
+      }
+
+      .back-link {
+        color: #fff;
+        font-size: 0.92rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .back-link:hover, .back-link:focus-visible { text-decoration: underline; }
+
+      main {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        padding: 28px 18px 54px;
+      }
+
+      .intro {
+        margin-bottom: 22px;
+        animation: arrive 360ms ease-out both;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+
+      h1 {
+        margin-bottom: 6px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 2rem;
+        font-weight: 600;
+      }
+
+      .intro p { margin-bottom: 0; color: var(--muted); }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.18fr) minmax(300px, 0.82fr);
+        align-items: start;
+        gap: 20px;
+      }
+
+      .left-column, .right-column { display: grid; gap: 18px; min-width: 0; }
+
+      .panel {
+        overflow: hidden;
+        border: 1px solid var(--rose-line);
+        border-radius: 8px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+
+      .panel-heading {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid #f5dce4;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .panel-heading h2 {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      .panel-heading span { color: var(--muted); font-size: 0.82rem; }
+
+      .catalog { display: grid; gap: 10px; padding: 14px; }
+
+      .product {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 80px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 13px;
+        padding: 10px;
+        border: 1px solid #f1dce3;
+        border-radius: 7px;
+        background: #fff;
+      }
+
+      .thumbnail {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        border: 1px solid #f0d4de;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 0.66rem;
+        text-align: center;
+      }
+
+      .thumbnail img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+      .thumbnail img[hidden] { display: none; }
+      .product-meta { min-width: 0; }
+      .product-meta h3 { margin: 0 0 4px; font-size: 0.96rem; line-height: 1.25; }
+      .product-meta p { margin: 0 0 5px; color: var(--muted); font-size: 0.78rem; line-height: 1.35; }
+      .price { color: var(--pink-dark); font-size: 0.86rem; font-weight: 700; }
+      .in-cart { display: block; margin-top: 4px; color: var(--green); font-size: 0.74rem; font-weight: 700; }
+
+      .product-actions { display: grid; justify-items: stretch; gap: 6px; }
+      .quantity {
+        width: 66px;
+        min-height: 34px;
+        justify-self: end;
+        border: 1px solid var(--rose-line);
+        border-radius: 5px;
+        padding: 4px 6px;
+        background: #fff;
+      }
+
+      .button {
+        min-height: 38px;
+        border: 0;
+        border-radius: 5px;
+        padding: 8px 13px;
+        background: var(--pink);
+        color: #fff;
+        font-size: 0.86rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .button:hover:not(:disabled) { background: var(--pink-dark); }
+      .button:focus-visible, input:focus-visible, .chip:focus-visible, .remove:focus-visible { outline: 3px solid #2d7560; outline-offset: 2px; }
+      .button:disabled { opacity: 0.54; cursor: not-allowed; }
+
+      .assistant-panel { display: flex; flex-direction: column; min-height: 435px; }
+      .assistant-panel .panel-heading { flex: 0 0 auto; }
+
+      .messages {
+        min-height: 200px;
+        max-height: 340px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px;
+        overscroll-behavior: contain;
+      }
+
+      .message {
+        max-width: 91%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 0.89rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        animation: arrive 220ms ease-out both;
+      }
+
+      .message.assistant { align-self: flex-start; border: 1px solid #f1dce3; background: var(--pink-pale); }
+      .message.user { align-self: flex-end; background: #eaf4ef; }
+      .message.error { align-self: stretch; max-width: none; border: 1px solid #edc0c4; background: #fff0f0; color: var(--red); }
+
+      .typing {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 15px 10px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .typing[hidden] { display: none; }
+      .typing::before { width: 7px; height: 7px; border-radius: 50%; background: var(--pink); content: ""; animation: pulse 900ms ease-in-out infinite alternate; }
+
+      .chips { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 14px 12px; }
+      .chip {
+        min-height: 34px;
+        border: 1px solid var(--rose-line);
+        border-radius: 18px;
+        padding: 6px 10px;
+        background: #fff;
+        color: var(--pink-dark);
+        font-size: 0.76rem;
+        cursor: pointer;
+      }
+      .chip:hover:not(:disabled) { background: var(--pink-pale); }
+      .chip:disabled { opacity: 0.6; cursor: wait; }
+
+      .chat-form {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 12px 14px 14px;
+        border-top: 1px solid #f5dce4;
+      }
+
+      .chat-input {
+        width: 100%;
+        min-height: 42px;
+        min-width: 0;
+        border: 1px solid var(--rose-line);
+        border-radius: 5px;
+        padding: 9px 11px;
+        background: #fff;
+      }
+
+      .cart-content { padding: 14px 16px 16px; }
+      .cart-empty { margin: 0; color: var(--muted); font-size: 0.88rem; }
+      .cart-lines { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+      .cart-line {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f5dce4;
+        font-size: 0.86rem;
+      }
+
+      .cart-name { min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+      .cart-quantity, .cart-line-total { white-space: nowrap; }
+      .cart-line-total { color: var(--pink-dark); font-weight: 700; }
+      .remove {
+        grid-column: 1 / -1;
+        justify-self: end;
+        border: 0;
+        padding: 2px 0;
+        background: transparent;
+        color: var(--red);
+        font-size: 0.78rem;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .cart-total {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 13px;
+        font-size: 0.96rem;
+        font-weight: 700;
+      }
+
+      .cart-total strong { color: var(--pink-dark); font-size: 1.1rem; }
+      .checkout-area { padding: 0 16px 16px; }
+      .checkout-prompt { margin: 0 0 12px; color: var(--green); font-weight: 700; }
+      .checkout-prompt[hidden], #paypal-button-container[hidden] { display: none; }
+      .payment-note { margin: 10px 0 0; color: var(--muted); font-size: 0.76rem; line-height: 1.45; }
+
+      .confirmation {
+        padding: 30px 20px;
+        text-align: center;
+        animation: arrive 280ms ease-out both;
+      }
+
+      .confirmation h2 { margin-bottom: 8px; color: var(--green); font-family: Georgia, "Times New Roman", serif; font-size: 1.5rem; }
+      .confirmation p { margin-bottom: 20px; font-weight: 700; }
+      .confirmation-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px 20px; }
+      .confirmation-links a { color: var(--pink-dark); font-size: 0.9rem; font-weight: 700; }
+      .status { min-height: 22px; margin: 10px 16px 0; color: var(--red); font-size: 0.82rem; }
+      .status:empty { display: none; }
+      .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+      @keyframes arrive { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes pulse { from { opacity: 0.35; } to { opacity: 1; } }
+
+      @media (max-width: 760px) {
+        main { padding-top: 22px; }
+        .layout { grid-template-columns: minmax(0, 1fr); }
+        .right-column { grid-row: 1; }
+        .left-column { grid-row: 2; }
+        .assistant-panel { min-height: 390px; }
+        .messages { max-height: 280px; }
+      }
+
+      @media (max-width: 430px) {
+        .header-inner { padding: 0 14px; }
+        main { padding: 20px 12px 36px; }
+        h1 { font-size: 1.7rem; }
+        .product { grid-template-columns: 64px minmax(0, 1fr) auto; gap: 9px; padding: 8px; }
+        .thumbnail { width: 64px; height: 64px; }
+        .product-meta h3 { font-size: 0.86rem; }
+        .product-meta p { font-size: 0.72rem; }
+        .button { padding-right: 10px; padding-left: 10px; }
+        .cart-line { grid-template-columns: minmax(0, 1fr) auto; }
+        .cart-line-total { grid-column: 2; }
+        .cart-quantity { grid-column: 1; grid-row: 2; color: var(--muted); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="back-link" href="index.html">← Back to Babes &amp; Babies</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <h1 id="page-title">Shop with us</h1>
+        <p>Find something gentle for mum, baby, or your next salon visit.</p>
+      </section>
+
+      <div class="layout">
+        <div class="left-column">
+          <section class="panel" aria-labelledby="catalog-title">
+            <div class="panel-heading">
+              <h2 id="catalog-title">Shop catalogue</h2>
+              <span>Prices in USD</span>
+            </div>
+            <div id="catalog" class="catalog" aria-live="polite"></div>
+          </section>
+        </div>
+
+        <div class="right-column">
+          <section class="panel assistant-panel" aria-labelledby="assistant-title">
+            <div class="panel-heading">
+              <h2 id="assistant-title">Shop assistant</h2>
+              <span>English &amp; Pidgin</span>
+            </div>
+            <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions">
+              <p class="message assistant">Welcome to Babes &amp; Babies. What can I help you find today?</p>
+            </div>
+            <div id="typing" class="typing" role="status" hidden>Assistant is thinking</div>
+            <div class="chips" aria-label="Suggested messages">
+              <button class="chip" type="button" data-message="Gentle products for mum and baby">Gentle products for mum and baby</button>
+              <button class="chip" type="button" data-message="Book a braiding deposit">Book a braiding deposit</button>
+              <button class="chip" type="button" data-message="Help with my skin">Help with my skin</button>
+            </div>
+            <form id="chat-form" class="chat-form">
+              <label class="visually-hidden" for="chat-input">Message the shop assistant</label>
+              <input id="chat-input" class="chat-input" type="text" maxlength="400" autocomplete="off" placeholder="Ask about products or booking" />
+              <button id="send-button" class="button" type="submit">Send</button>
+            </form>
+          </section>
+
+          <section id="cart-panel" class="panel" aria-labelledby="cart-title">
+            <div class="panel-heading">
+              <h2 id="cart-title">Your cart</h2>
+              <span id="cart-count">0 items</span>
+            </div>
+            <div class="cart-content">
+              <p id="cart-empty" class="cart-empty">Your cart is empty.</p>
+              <ul id="cart-lines" class="cart-lines"></ul>
+              <div class="cart-total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
+            </div>
+            <div id="checkout-area" class="checkout-area">
+              <p id="checkout-prompt" class="checkout-prompt" hidden>Review your cart, then pay with PayPal</p>
+              <div id="paypal-button-container" hidden></div>
+              <p class="payment-note">Test mode: payments run in the PayPal Sandbox, so no real money is charged.</p>
+              <p id="payment-status" class="status" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+
+          <section id="confirmation" class="panel confirmation" aria-live="polite" hidden>
+            <h2>Payment received</h2>
+            <p>Amount paid: <span id="confirmation-amount"></span></p>
+            <nav class="confirmation-links" aria-label="After payment">
+              <a href="index.html">Back to Babes &amp; Babies</a>
+              <a id="continue-shopping" href="#catalog-title">Continue shopping</a>
+            </nav>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const WORKER_URL = 'https://babesandbabies-chat.babesandbabies.workers.dev';
+      const state = {
+        catalog: [],
+        messages: [],
+        cart: [],
+        total: 0,
+        readyForCheckout: false,
+        note: '',
+        context: readContext(),
+        clientId: '',
+        busy: false,
+        paypalReady: false,
+        paypalRendered: false
+      };
+
+      const catalogElement = document.getElementById('catalog');
+      const messagesElement = document.getElementById('messages');
+      const chatForm = document.getElementById('chat-form');
+      const chatInput = document.getElementById('chat-input');
+      const sendButton = document.getElementById('send-button');
+      const typingElement = document.getElementById('typing');
+      const cartLinesElement = document.getElementById('cart-lines');
+      const cartEmptyElement = document.getElementById('cart-empty');
+      const cartTotalElement = document.getElementById('cart-total');
+      const cartCountElement = document.getElementById('cart-count');
+      const checkoutPrompt = document.getElementById('checkout-prompt');
+      const paypalContainer = document.getElementById('paypal-button-container');
+      const paymentStatus = document.getElementById('payment-status');
+      const confirmation = document.getElementById('confirmation');
+
+      function money(value) {
+        return Number(value || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+      }
+
+      function cleanContext(value) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+        const result = {};
+        if (typeof value.style === 'string' && value.style.trim()) result.style = value.style.trim().slice(0, 60);
+        if (value.skin && typeof value.skin === 'object' && !Array.isArray(value.skin)) {
+          const skin = {};
+          for (const key of ['radiance', 'oiliness', 'texture', 'pore', 'acne', 'moisture']) {
+            const score = value.skin[key];
+            if (typeof score === 'number' && Number.isFinite(score) && score >= 0 && score <= 100) skin[key] = score;
+          }
+          if (Object.keys(skin).length) result.skin = skin;
+        }
+        return Object.keys(result).length ? result : null;
+      }
+
+      function readContext() {
+        const hash = window.location.hash.slice(1);
+        if (hash) {
+          try {
+            const params = new URLSearchParams(hash);
+            if (params.has('context')) {
+              const context = cleanContext(JSON.parse(params.get('context')));
+              if (context) return context;
+            }
+            const fromParams = cleanContext({
+              style: params.get('style') || '',
+              skin: params.has('skin') ? JSON.parse(params.get('skin')) : undefined
+            });
+            if (fromParams) return fromParams;
+          } catch (error) {
+          }
+        }
+        try {
+          return cleanContext(JSON.parse(sessionStorage.getItem('shopContext') || 'null')) || {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function appendMessage(role, text, isError = false) {
+        const message = document.createElement('p');
+        message.className = `message ${isError ? 'error' : role}`;
+        message.textContent = text;
+        messagesElement.append(message);
+        messagesElement.scrollTop = messagesElement.scrollHeight;
+      }
+
+      function renderCatalog() {
+        catalogElement.replaceChildren();
+        if (!state.catalog.length) {
+          const empty = document.createElement('p');
+          empty.className = 'cart-empty';
+          empty.textContent = 'The catalogue is unavailable right now.';
+          catalogElement.append(empty);
+          return;
+        }
+
+        for (const item of state.catalog) {
+          const row = document.createElement('article');
+          row.className = 'product';
+
+          const thumbnail = document.createElement('div');
+          thumbnail.className = 'thumbnail';
+          thumbnail.setAttribute('aria-hidden', 'true');
+          const placeholder = document.createElement('span');
+          placeholder.textContent = 'Image unavailable';
+          thumbnail.append(placeholder);
+          if (item.image) {
+            try {
+              const imageUrl = new URL(item.image);
+              if (imageUrl.protocol === 'https:') {
+                const image = document.createElement('img');
+                image.alt = '';
+                image.loading = 'lazy';
+                image.src = imageUrl.href;
+                image.addEventListener('load', () => { placeholder.hidden = true; }, { once: true });
+                image.addEventListener('error', () => { image.remove(); }, { once: true });
+                thumbnail.append(image);
+              }
+            } catch (error) {}
+          }
+
+          const meta = document.createElement('div');
+          meta.className = 'product-meta';
+          const name = document.createElement('h3');
+          name.textContent = item.name;
+          const description = document.createElement('p');
+          description.textContent = `${item.description} · ${item.type}`;
+          const price = document.createElement('span');
+          price.className = 'price';
+          price.textContent = money(item.price);
+          const inCart = document.createElement('span');
+          inCart.className = 'in-cart';
+          inCart.dataset.for = item.id;
+          inCart.textContent = 'In cart: 0';
+          meta.append(name, description, price, inCart);
+
+          const actions = document.createElement('div');
+          actions.className = 'product-actions';
+          const quantity = document.createElement('select');
+          quantity.className = 'quantity';
+          quantity.setAttribute('aria-label', `Quantity for ${item.name}`);
+          for (let count = 1; count <= 10; count++) {
+            const option = document.createElement('option');
+            option.value = String(count);
+            option.textContent = String(count);
+            quantity.append(option);
+          }
+          const add = document.createElement('button');
+          add.className = 'button';
+          add.type = 'button';
+          add.textContent = 'Add';
+          add.addEventListener('click', () => {
+            const qty = Number(quantity.value);
+            const existingQty = state.cart.find((line) => line.id === item.id)?.qty || 0;
+            if (existingQty + qty > 10) {
+              showPaymentError('A cart line cannot exceed quantity 10.');
+              return;
+            }
+            sendMessage(`Please add ${qty} ${item.name} to my cart.`);
+          });
+          actions.append(quantity, add);
+          row.append(thumbnail, meta, actions);
+          catalogElement.append(row);
+        }
+        setBusy(state.busy);
+      }
+
+      function renderCart() {
+        cartLinesElement.replaceChildren();
+        const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
+        cartCountElement.textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
+        cartEmptyElement.hidden = state.cart.length > 0;
+        cartTotalElement.textContent = money(state.total);
+        document.querySelectorAll('.in-cart').forEach((element) => {
+          const item = state.cart.find((line) => line.id === element.dataset.for);
+          element.textContent = `In cart: ${item?.qty || 0}`;
+        });
+
+        for (const item of state.cart) {
+          const row = document.createElement('li');
+          row.className = 'cart-line';
+          const name = document.createElement('span');
+          name.className = 'cart-name';
+          name.textContent = item.name;
+          const quantity = document.createElement('span');
+          quantity.className = 'cart-quantity';
+          quantity.textContent = `Qty ${item.qty}`;
+          const lineTotal = document.createElement('span');
+          lineTotal.className = 'cart-line-total';
+          lineTotal.textContent = money(item.lineTotal);
+          const remove = document.createElement('button');
+          remove.className = 'remove';
+          remove.type = 'button';
+          remove.textContent = 'Remove';
+          remove.setAttribute('aria-label', `Remove ${item.name} from cart`);
+          remove.disabled = state.busy;
+          remove.addEventListener('click', () => sendMessage(`Please remove ${item.name} from my cart.`));
+          row.append(name, quantity, lineTotal, remove);
+          cartLinesElement.append(row);
+        }
+
+        checkoutPrompt.hidden = !state.readyForCheckout || state.total <= 0;
+        paypalContainer.hidden = !state.readyForCheckout || state.total <= 0;
+        if (state.readyForCheckout && state.total > 0) {
+          renderPayPalButtons();
+        }
+      }
+
+      function setBusy(busy) {
+        state.busy = busy;
+        typingElement.hidden = !busy;
+        sendButton.disabled = busy;
+        chatInput.disabled = busy;
+        document.querySelectorAll('.chip').forEach((button) => { button.disabled = busy; });
+        document.querySelectorAll('.product-actions .button').forEach((button) => { button.disabled = busy; });
+        renderCart();
+      }
+
+      function showPaymentError(message) {
+        paymentStatus.textContent = message;
+      }
+
+      async function sendMessage(text) {
+        const userText = text.trim().slice(0, 400);
+        if (!userText || state.busy) return;
+        paymentStatus.textContent = '';
+        state.messages.push({ role: 'user', text: userText });
+        appendMessage('user', userText);
+        chatInput.value = '';
+        setBusy(true);
+        try {
+          const response = await fetch(`${WORKER_URL}/agent/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: state.messages.slice(-10), cart: state.cart.map(({ id, qty }) => ({ id, qty })), context: state.context })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'The shop assistant could not reply just now. Please try again.');
+          state.cart = Array.isArray(data.cart) ? data.cart : [];
+          state.total = Number.isFinite(data.total) ? data.total : 0;
+          state.readyForCheckout = data.readyForCheckout === true;
+          state.note = typeof data.note === 'string' ? data.note.slice(0, 140) : '';
+          state.messages.push({ role: 'assistant', text: String(data.reply || '') });
+          appendMessage('assistant', String(data.reply || 'I’m here to help you shop.'));
+          renderCart();
+          if (state.readyForCheckout) {
+            document.getElementById('cart-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        } catch (error) {
+          appendMessage('assistant', error.message || 'The shop assistant is unavailable right now. Please try again.', true);
+        } finally {
+          setBusy(false);
+          chatInput.focus();
+        }
+      }
+
+      function loadPayPalSdk() {
+        if (!state.clientId || state.paypalReady || document.getElementById('paypal-sdk')) return;
+        const script = document.createElement('script');
+        script.id = 'paypal-sdk';
+        script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(state.clientId)}&currency=USD&components=buttons`;
+        script.onload = () => {
+          if (!window.paypal) {
+            showPaymentError('PayPal could not load. Please refresh and try again.');
+            return;
+          }
+          state.paypalReady = true;
+          renderPayPalButtons();
+        };
+        script.onerror = () => showPaymentError('PayPal could not load. Please try again later.');
+        document.head.append(script);
+      }
+
+      function renderPayPalButtons() {
+        if (!state.paypalReady || state.paypalRendered || !state.readyForCheckout || state.total <= 0) return;
+        state.paypalRendered = true;
+        window.paypal.Buttons({
+          style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
+          createOrder: async () => {
+            if (!state.readyForCheckout || state.total <= 0 || !state.cart.length) throw new Error('Ask the assistant to prepare your cart for checkout first.');
+            const response = await fetch(`${WORKER_URL}/paypal/create-order`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ items: state.cart.map(({ id, qty }) => ({ id, qty })), note: state.note })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.orderId) throw new Error(data.error || 'Unable to create PayPal order.');
+            return data.orderId;
+          },
+          onApprove: async (data) => {
+            const response = await fetch(`${WORKER_URL}/paypal/capture-order`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: data.orderID })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Payment capture failed.');
+            document.getElementById('confirmation-amount').textContent = money(result.amount);
+            document.querySelector('.layout').hidden = true;
+            document.querySelector('.intro').hidden = true;
+            confirmation.hidden = false;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          },
+          onError: (error) => showPaymentError(error?.message || 'PayPal checkout failed. Please try again.')
+        }).render('#paypal-button-container').catch((error) => {
+          state.paypalRendered = false;
+          showPaymentError(error?.message || 'PayPal buttons could not load.');
+        });
+      }
+
+      async function loadShop() {
+        const [catalogResponse, configResponse] = await Promise.all([
+          fetch(`${WORKER_URL}/shop/catalog`),
+          fetch(`${WORKER_URL}/paypal/config`)
+        ]);
+        if (!catalogResponse.ok || !configResponse.ok) throw new Error('The shop is unavailable right now. Please refresh and try again.');
+        state.catalog = await catalogResponse.json();
+        const config = await configResponse.json();
+        state.clientId = typeof config.clientId === 'string' ? config.clientId : '';
+        renderCatalog();
+        renderCart();
+        loadPayPalSdk();
+      }
+
+      chatForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        sendMessage(chatInput.value);
+      });
+
+      document.querySelectorAll('.chip').forEach((button) => {
+        button.addEventListener('click', () => sendMessage(button.dataset.message || ''));
+      });
+
+      document.getElementById('continue-shopping').addEventListener('click', (event) => {
+        event.preventDefault();
+        confirmation.hidden = true;
+        document.querySelector('.layout').hidden = false;
+        document.querySelector('.intro').hidden = false;
+        state.cart = [];
+        state.total = 0;
+        state.readyForCheckout = false;
+        state.note = '';
+        state.messages = [];
+        messagesElement.replaceChildren();
+        appendMessage('assistant', 'Welcome to Babes & Babies. What can I help you find today?');
+        renderCart();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      loadShop().catch((error) => {
+        appendMessage('assistant', error.message || 'The shop is unavailable right now. Please try again.', true);
+      });
+    </script>
+  </body>
+</html>

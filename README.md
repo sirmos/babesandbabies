@@ -3,6 +3,7 @@
 A hair and baby products shop in Ekim Town, Mkpat Enin, Akwa Ibom State, Nigeria. Customers can **see a hairstyle on themselves before they book**, get a **skin report with product picks**, and chat with AI assistants in English and Nigerian Pidgin.
 
 **Live site:** https://babesandbabies-dcb39.web.app
+**AI Shop Assistant:** https://babesandbabies-dcb39.web.app/shop.html
 **AI Try-On page:** https://babesandbabies-dcb39.web.app/tryon.html
 **Built for:** YouCam API Skin AI & eCommerce VTO Hackathon
 
@@ -107,6 +108,8 @@ firebase deploy --only hosting
 | `/youcam/hair-transfer` | POST | Try-on with a salon reference photo (allow-listed to this site's URLs) |
 | `/youcam/skin` | POST | Skin analysis plus product recommendation |
 | `/` | POST | Shop chat assistant (Gemini) |
+| `/agent/chat` | POST | Shop assistant with a catalogue-validated cart and checkout handoff |
+| `/shop/catalog` | GET | Catalogue used by the shop and checkout |
 
 ## Adding salon styles
 See [`styles/README.md`](styles/README.md). In short, add the display photo to `styles/styles.json`. To make a style try-on-able, also add a front-facing `tryOnImage` (JPG, under 10 MB, long side at most 1024px, one clear face), then run `firebase deploy --only hosting`.

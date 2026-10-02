@@ -112,7 +112,14 @@ export default {
     try {
       if (path === '/shop/catalog' && request.method === 'GET') {
         return jsonResponse(
-          catalog.map(({ id, name, price, type, description }) => ({ id, name, price, type, description })),
+          catalog.map(({ id, name, price, type, description, image }) => ({
+            id,
+            name,
+            price,
+            type,
+            description,
+            image: image ? new URL(image, 'https://babesandbabies-dcb39.web.app/').href : null
+          })),
           200,
           corsHeaders
         );

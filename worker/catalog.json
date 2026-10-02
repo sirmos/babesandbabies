@@ -4,55 +4,63 @@
     "name": "Baby lotion",
     "price": "5.00",
     "type": "product",
-    "description": "Gentle everyday lotion for soft, hydrated skin."
+    "description": "Gentle everyday lotion for soft, hydrated skin.",
+    "image": "images/products/baby_lotion.jpg"
   },
   {
     "id": "bath_gel",
     "name": "Bath gel",
     "price": "6.00",
     "type": "product",
-    "description": "Mild cleansing bath gel for daily use."
+    "description": "Mild cleansing bath gel for daily use.",
+    "image": "images/products/bath_gel.jpg"
   },
   {
     "id": "baby_powder",
     "name": "Baby powder",
     "price": "4.50",
     "type": "product",
-    "description": "Lightweight powder for a fresh, dry feel."
+    "description": "Lightweight powder for a fresh, dry feel.",
+    "image": "images/products/baby_powder.jpg"
   },
   {
     "id": "petroleum_jelly",
     "name": "Petroleum jelly",
     "price": "3.50",
     "type": "product",
-    "description": "Versatile skin barrier cream for dry areas."
+    "description": "Versatile skin barrier cream for dry areas.",
+    "image": "images/products/petroleum_jelly.jpg"
   },
   {
     "id": "baby_shampoo",
     "name": "Baby shampoo",
     "price": "5.50",
     "type": "product",
-    "description": "Mild shampoo for gentle cleansing."
+    "description": "Mild shampoo for gentle cleansing.",
+    "image": "images/products/baby_shampoo.jpg"
   },
   {
     "id": "baby_oil",
     "name": "Baby oil",
     "price": "4.00",
     "type": "product",
-    "description": "Lightweight oil to help lock in moisture."
+    "description": "Lightweight oil to help lock in moisture.",
+    "image": "images/products/baby_oil.jpg"
   },
   {
     "id": "diaper_rash_cream",
     "name": "Diaper rash cream",
     "price": "7.00",
     "type": "product",
-    "description": "Soothing cream for protection and comfort."
+    "description": "Soothing cream for protection and comfort.",
+    "image": "images/products/diaper_rash_cream.jpg"
   },
   {
     "id": "booking_deposit",
     "name": "Hair booking deposit",
     "price": "20.00",
     "type": "service",
-    "description": "Booking deposit for salon styling and appointment scheduling."
+    "description": "Booking deposit for salon styling and appointment scheduling.",
+    "image": "images/products/booking_deposit.jpg"
   }
 ]

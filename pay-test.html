@@ -57,13 +57,45 @@
 
       .item {
         display: grid;
-        grid-template-columns: auto 1fr auto;
+        grid-template-columns: 20px 72px minmax(0, 1fr) auto;
         align-items: center;
         gap: 12px;
-        padding: 12px 14px;
+        padding: 12px;
         border: 1px solid var(--pink-200);
-        border-radius: 12px;
+        border-radius: 8px;
         background: #fff;
+      }
+
+      .thumbnail {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 72px;
+        overflow: hidden;
+        border-radius: 6px;
+        background: var(--pink-100);
+        color: var(--muted);
+        font-size: 0.68rem;
+        text-align: center;
+      }
+
+      .product-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        object-fit: contain;
+      }
+
+      .product-image[hidden],
+      .button-wrap [hidden] {
+        display: none !important;
+      }
+
+      .meta {
+        min-width: 0;
       }
 
       input[type="checkbox"] {
@@ -111,6 +143,21 @@
         min-height: 52px;
       }
 
+      .pick-item-button {
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 6px;
+        background: #e5e5e5;
+        color: #555;
+        font: inherit;
+        font-weight: 700;
+      }
+
+      .pick-item-button:disabled {
+        cursor: not-allowed;
+      }
+
       .status {
         min-height: 28px;
         margin-top: 16px;
@@ -135,11 +182,16 @@
 
       @media (max-width: 560px) {
         .item {
-          grid-template-columns: auto 1fr;
+          grid-template-columns: 20px 56px minmax(0, 1fr);
+        }
+
+        .thumbnail {
+          width: 56px;
+          height: 56px;
         }
 
         .qty {
-          grid-column: 2;
+          grid-column: 3;
           width: 100%;
         }
       }
@@ -158,7 +210,10 @@
           <span id="total" class="total">$0.00</span>
         </div>
 
-        <div id="paypal-button-container" class="button-wrap"></div>
+        <div class="button-wrap">
+          <button id="pick-item-button" class="pick-item-button" type="button" disabled>Pick an item to pay.</button>
+          <div id="paypal-button-container" hidden></div>
+        </div>
         <div id="status" class="status" aria-live="polite"></div>
         <div id="error-detail" class="error-detail" aria-live="polite"></div>
         <div class="note">The Client ID comes from the Worker at /paypal/config. No secret is exposed.</div>
@@ -171,7 +226,8 @@
       const state = {
         catalog: [],
         clientId: '',
-        paypalReady: false
+        paypalReady: false,
+        paypalRendered: false
       };
 
       const catalogEl = document.getElementById('catalog');
@@ -179,6 +235,7 @@
       const statusEl = document.getElementById('status');
       const errorDetailEl = document.getElementById('error-detail');
       const paypalContainer = document.getElementById('paypal-button-container');
+      const pickItemButton = document.getElementById('pick-item-button');
 
       function setError(message, url, errorText) {
         statusEl.textContent = message;
@@ -205,6 +262,10 @@
         catalogEl.innerHTML = state.catalog.map((item) => `
           <label class="item">
             <input type="checkbox" value="${item.id}" data-id="${item.id}" class="item-check" />
+            <span class="thumbnail" aria-hidden="true">
+              <span class="thumbnail-placeholder">Image unavailable</span>
+              <img class="product-image" data-for="${item.id}" alt="" loading="lazy" decoding="async" hidden />
+            </span>
             <span class="meta">
               <strong>${item.name}</strong>
               <span>${item.description} · ${item.type}</span>
@@ -214,6 +275,27 @@
             </select>
           </label>
         `).join('');
+
+        catalogEl.querySelectorAll('.product-image').forEach((image) => {
+          const item = state.catalog.find((entry) => entry.id === image.dataset.for);
+          if (!item?.image) return;
+
+          image.addEventListener('load', () => {
+            image.previousElementSibling.hidden = true;
+          }, { once: true });
+          image.addEventListener('error', () => {
+            image.hidden = true;
+          }, { once: true });
+
+          try {
+            const imageUrl = new URL(item.image);
+            if (imageUrl.protocol !== 'https:') return;
+            image.src = imageUrl.href;
+            image.hidden = false;
+          } catch (error) {
+            image.hidden = true;
+          }
+        });
 
         catalogEl.querySelectorAll('.item-check').forEach((checkbox) => {
           checkbox.addEventListener('change', updateTotal);
@@ -244,12 +326,17 @@
           return sum + (unit * Number(item.qty || 1));
         }, 0);
         totalEl.textContent = money(total);
+        const canPay = total > 0;
+        pickItemButton.hidden = canPay;
+        paypalContainer.hidden = !canPay;
 
         document.querySelectorAll('.qty').forEach((select) => {
           const id = select.dataset.for;
           const checkbox = document.querySelector(`.item-check[value="${id}"]`);
           select.disabled = !(checkbox && checkbox.checked);
         });
+
+        if (canPay && state.paypalReady) renderPayPalButtons();
       }
 
       async function loadCatalogAndConfig() {
@@ -283,7 +370,15 @@
             return;
           }
           state.paypalReady = true;
-          window.paypal.Buttons({
+          updateTotal();
+        };
+        document.head.appendChild(script);
+      }
+
+      function renderPayPalButtons() {
+        if (state.paypalRendered) return;
+        state.paypalRendered = true;
+        window.paypal.Buttons({
             style: {
               layout: 'vertical',
               color: 'gold',
@@ -332,9 +427,7 @@
             onError: function(err) {
               setError(err?.message || 'PayPal checkout failed.', '', '');
             }
-          }).render('#paypal-button-container');
-        };
-        document.head.appendChild(script);
+        }).render('#paypal-button-container');
       }
 
       loadCatalogAndConfig().catch((error) => {

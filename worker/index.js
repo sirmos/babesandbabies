@@ -1,4 +1,5 @@
 import catalog from './catalog.json';
+import { agentSafetyReply, detectAgentLanguage, isAgentSafetyRequest, parseLocalIntent, sanitizeAgentNote as sanitizeBookingNote } from './agent-parser.mjs';
 
 const agentRateLimits = new Map();
 const agentSkinFields = ['radiance', 'oiliness', 'texture', 'pore', 'acne', 'moisture'];
@@ -16,11 +17,6 @@ const embeddedSalonStyles = [
   'Ghana braids'
 ];
 let salonStyleCache = { titles: embeddedSalonStyles, expiresAt: 0, pending: null };
-
-function sanitizeBookingNote(value) {
-  if (typeof value !== 'string') return '';
-  return value.replace(/<[^>]*>/g, '').replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
-}
 
 async function getSalonStyleTitles() {
   if (salonStyleCache.expiresAt > Date.now()) return salonStyleCache.titles;
@@ -131,7 +127,6 @@ function normalizedMessages(messages) {
 
 async function callAI({ system, messages, json = false, env }) {
   const conversation = normalizedMessages(messages);
-
   for (const provider of aiProviders) {
     if (!providerIsConfigured(provider, env) || !getProviderAvailability(provider, env)) continue;
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -182,7 +177,6 @@ async function callAI({ system, messages, json = false, env }) {
           }
           break;
         }
-
         const text = provider.kind === 'gemini'
           ? data?.candidates?.[0]?.content?.parts?.filter((part) => typeof part.text === 'string').map((part) => part.text).join('').trim()
           : data?.response;
@@ -209,7 +203,6 @@ async function callAI({ system, messages, json = false, env }) {
       }
     }
   }
-
   throw new AIProviderError();
 }
 
@@ -274,25 +267,15 @@ async function getPayPalAccessToken(env) {
 
 function validateCatalogItems(items) {
   const catalogMap = new Map(catalog.map((entry) => [entry.id, entry]));
-  if (!Array.isArray(items) || items.length === 0) {
-    throw new Error('Missing items');
-  }
-  if (items.length > 10) {
-    throw new Error('Maximum 10 line items');
-  }
+  if (!Array.isArray(items) || items.length === 0) throw new Error('Missing items');
+  if (items.length > 10) throw new Error('Maximum 10 line items');
 
   const normalizedItems = [];
   for (const item of items) {
     const itemId = typeof item?.id === 'string' ? item.id.trim() : '';
     const qty = Number(item?.qty);
-
-    if (!itemId || !catalogMap.has(itemId)) {
-      throw new Error(`Unknown product id: ${itemId || 'missing'}`);
-    }
-    if (!Number.isInteger(qty) || qty < 1 || qty > 10) {
-      throw new Error(`Invalid quantity for ${itemId}`);
-    }
-
+    if (!itemId || !catalogMap.has(itemId)) throw new Error(`Unknown product id: ${itemId || 'missing'}`);
+    if (!Number.isInteger(qty) || qty < 1 || qty > 10) throw new Error(`Invalid quantity for ${itemId}`);
     const product = catalogMap.get(itemId);
     normalizedItems.push({
       id: itemId,
@@ -303,7 +286,6 @@ function validateCatalogItems(items) {
       lineTotal: Number(product.price) * qty
     });
   }
-
   return normalizedItems;
 }
 
@@ -311,7 +293,6 @@ function validateAgentCart(items) {
   if (!Array.isArray(items)) return [];
   const catalogMap = new Map(catalog.map((entry) => [entry.id, entry]));
   const cart = new Map();
-
   for (const item of items) {
     const id = typeof item?.id === 'string' ? item.id.trim() : '';
     const qty = item?.qty;
@@ -323,7 +304,6 @@ function validateAgentCart(items) {
     const combinedQty = (cart.get(id) || 0) + qty;
     if (combinedQty <= 10) cart.set(id, combinedQty);
   }
-
   return Array.from(cart, ([id, qty]) => ({ id, qty })).slice(0, 10);
 }
 
@@ -334,10 +314,7 @@ function getAgentCartDetails(cart) {
     const price = Number(product.price);
     return { id, name: product.name, qty, price, lineTotal: price * qty };
   });
-  return {
-    items,
-    total: items.reduce((sum, item) => sum + item.lineTotal, 0)
-  };
+  return { items, total: items.reduce((sum, item) => sum + item.lineTotal, 0) };
 }
 
 function allowAgentRequest(request) {
@@ -365,8 +342,7 @@ function validateAgentMessages(messages) {
   return messages.slice(-10).flatMap((message) => {
     if (!['user', 'assistant'].includes(message?.role) || typeof message.text !== 'string') return [];
     const text = message.text.trim().slice(0, 400);
-    if (!text) return [];
-    return [{ role: message.role, text }];
+    return text ? [{ role: message.role, text }] : [];
   });
 }
 
@@ -383,111 +359,6 @@ function validateAgentContext(context) {
     if (Object.keys(skin).length) result.skin = skin;
   }
   return result;
-}
-
-const agentProducts = [
-  { id: 'baby_lotion', aliases: ['baby lotion', 'lotion', 'lotions'] },
-  { id: 'bath_gel', aliases: ['bath gel', 'bath soap', 'soap', 'gel'] },
-  { id: 'baby_powder', aliases: ['baby powder', 'powder'] },
-  { id: 'petroleum_jelly', aliases: ['petroleum jelly', 'vaseline', 'jelly'] },
-  { id: 'baby_shampoo', aliases: ['baby shampoo', 'shampoo'] },
-  { id: 'baby_oil', aliases: ['baby oil', 'oil'] },
-  { id: 'diaper_rash_cream', aliases: ['diaper rash cream', 'rash cream', 'diaper cream'] },
-  { id: 'booking_deposit', aliases: ['booking deposit', 'hair deposit', 'braiding deposit', 'deposit', 'booking'] }
-];
-const agentNumberWords = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
-
-function matchAgentProduct(text) {
-  const matches = [];
-  for (const product of agentProducts) {
-    for (const alias of product.aliases) {
-      const expression = new RegExp(`(?:^|\\b)${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:s)?(?:\\b|$)`, 'i');
-      if (expression.test(text)) {
-        matches.push(product.id);
-        break;
-      }
-    }
-  }
-  return matches.length === 1 ? matches[0] : null;
-}
-
-function askForSalonStyle(styleTitles) {
-  return `Which style would you like? For example: ${styleTitles.slice(0, 3).join(', ')}.`;
-}
-
-function parseLocalIntent(text, state, context, styleTitles) {
-  const normalized = text.trim().toLowerCase();
-  const matchingStyle = [...styleTitles].sort((first, second) => second.length - first.length)
-    .find((title) => normalized.includes(title.toLowerCase()));
-  const forMatch = text.trim().match(/\bfor\s+(.+?)(?:[,.!?]|$)/i);
-  const bookingIntent = /\b(deposit|booking|book|appointment)\b/.test(normalized);
-  const genericBraiding = /\b(braiding|braid)\b/.test(normalized) && !matchingStyle;
-  if (bookingIntent || genericBraiding) {
-    const style = sanitizeBookingNote(matchingStyle || forMatch?.[1] || context.style || state.note || '');
-    if (!style) {
-      return { matched: true, reply: askForSalonStyle(styleTitles) };
-    }
-    const product = catalog.find((item) => item.id === 'booking_deposit');
-    const existing = state.cart.find((item) => item.id === product.id);
-    if (!existing && state.cart.length >= 10) return { matched: true, reply: 'Your cart has reached its 10-item limit.' };
-    if (existing) existing.qty = 1;
-    else state.cart.push({ id: product.id, qty: 1 });
-    state.note = style;
-    const verb = existing ? 'Updated' : 'Added';
-    return { matched: true, reply: `${verb} ${product.name} for ${style}. You can try this style on your own photo first.` };
-  }
-  if (/^(?:show|view|check|what(?:'s| is) in)\s+(?:my\s+)?cart\??$/.test(normalized)) {
-    const details = getAgentCartDetails(state.cart);
-    const summary = details.items.length
-      ? details.items.map((item) => `${item.qty} ${item.name}`).join(', ')
-      : 'Your cart is empty';
-    return { matched: true, reply: `${summary}. Total: $${details.total.toFixed(2)}.` };
-  }
-  if (/^(?:please\s+)?(?:pay|checkout|check out|ready to pay|i(?:'m| am) ready to pay)(?:\s+now)?[.!?]*$/.test(normalized)) {
-    if (!state.cart.length) return { matched: true, reply: 'Your cart is empty. Add an item before checkout.' };
-    state.readyForCheckout = true;
-    if (state.cart.some((item) => item.id === 'booking_deposit') && context.style) state.note = context.style.slice(0, 60);
-    return { matched: true, reply: 'Your cart is ready. Review it and tap the PayPal button when you are ready.' };
-  }
-  const removeMatch = normalized.match(/^(?:please\s+)?(?:remove|delete)\s+(?:the\s+)?(.+?)[.!?]*$/);
-  if (removeMatch) {
-    const id = matchAgentProduct(removeMatch[1]);
-    if (!id) return { matched: false };
-    const product = catalog.find((item) => item.id === id);
-    const oldLength = state.cart.length;
-    state.cart = state.cart.filter((item) => item.id !== id);
-    if (state.cart.length === oldLength) return { matched: true, reply: `${product.name} is not in your cart.` };
-    if (id === 'booking_deposit') state.note = '';
-    return { matched: true, reply: `Removed ${product.name} from your cart.` };
-  }
-
-  const addMatch = normalized.match(/^(?:(?:please\s+)?(?:i\s+)?(?:add|need|want|get)\b|(?:please\s+)?give\s+me\b)\s*(?:(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+)?(.+?)[.!?]*$/);
-  if (!addMatch) return { matched: false };
-  const id = matchAgentProduct(addMatch[2]);
-  if (!id) return { matched: false };
-  const qty = addMatch[1]
-    ? (/^\d+$/.test(addMatch[1]) ? Number(addMatch[1]) : agentNumberWords[addMatch[1]])
-    : 1;
-  if (!Number.isInteger(qty) || qty < 1) return { matched: true, reply: 'Please choose a quantity from 1 to 10.' };
-  if (qty > 10) return { matched: true, reply: 'You can add up to 10 of an item at a time.' };
-  const product = catalog.find((item) => item.id === id);
-  const existing = state.cart.find((item) => item.id === id);
-  if ((existing?.qty || 0) + qty > 10) return { matched: true, reply: `You can have up to 10 ${product.name} in your cart.` };
-  if (!existing && state.cart.length >= 10) return { matched: true, reply: 'Your cart has reached its 10-item limit.' };
-  if (existing) existing.qty += qty;
-  else state.cart.push({ id, qty });
-  if (id === 'booking_deposit' && context.style) state.note = sanitizeBookingNote(context.style);
-  return { matched: true, reply: `Added ${qty} ${product.name} to your cart.` };
-}
-
-function isAgentSafetyRequest(text) {
-  const normalized = text.toLowerCase();
-  return /\b(ignore|disregard|override)\b.{0,60}\b(instructions?|rules?|prompt)\b|\b(reveal|show|tell me|print|repeat)\b.{0,60}\b(system prompt|instructions?|hidden prompt)\b|\b(change|lower|reduce|set|override|adjust|make)\b.{0,50}\b(prices?|costs?|cheaper)\b|\b(?:\d{1,3}\s*%|%|percent(?:age)?)\s*(?:off|discount)\b|\b(?:discount|free|complimentary)\b/.test(normalized);
-}
-
-function agentSafetyReply() {
-  const items = catalog.map((item) => `${item.name} ($${Number(item.price).toFixed(2)})`).join(', ');
-  return `I can't change prices, give away items, or reveal private instructions. Our catalogue is: ${items}.`;
 }
 
 function parseAgentJson(text) {
@@ -561,33 +432,47 @@ function describePerformedActions(actions) {
 
 async function handleAgentChat(request, env, corsHeaders) {
   if (!allowAgentRequest(request)) {
+    console.log('fallback');
     return jsonResponse({ error: 'You have sent a lot of messages. Please wait a minute and try again.' }, 429, corsHeaders);
   }
   let payload;
   try {
     payload = await request.json();
   } catch (error) {
+    console.log('fallback');
     return jsonResponse({ error: 'Please send a valid chat request.' }, 400, corsHeaders);
   }
 
   const messages = validateAgentMessages(payload?.messages);
   if (!messages.length || !messages.some((message) => message.role === 'user')) {
+    console.log('fallback');
     return jsonResponse({ error: 'Please send a message to the shop assistant.' }, 400, corsHeaders);
   }
+  const latestUser = [...messages].reverse().find((message) => message.role === 'user');
+  const language = detectAgentLanguage(latestUser.text);
   const context = validateAgentContext(payload?.context);
-  const styleTitles = await getSalonStyleTitles();
   const state = {
     cart: validateAgentCart(payload?.cart),
     readyForCheckout: false,
     note: sanitizeBookingNote(payload?.note)
   };
-  const latestUser = [...messages].reverse().find((message) => message.role === 'user');
   if (isAgentSafetyRequest(latestUser.text)) {
-    return jsonResponse({ reply: agentSafetyReply(), cart: getAgentCartDetails(state.cart).items, total: getAgentCartDetails(state.cart).total, readyForCheckout: false, note: state.note, provider: 'local', usedFallback: false }, 200, corsHeaders);
+    console.log('local');
+    return jsonResponse({ reply: agentSafetyReply(latestUser.text, catalog, language), cart: getAgentCartDetails(state.cart).items, total: getAgentCartDetails(state.cart).total, readyForCheckout: false, note: state.note, provider: 'local', usedFallback: false }, 200, corsHeaders);
   }
 
-  const localIntent = parseLocalIntent(latestUser.text, state, context, styleTitles);
-  if (localIntent.matched) {
+  const styleTitles = await getSalonStyleTitles();
+  const localIntent = parseLocalIntent({
+    message: latestUser.text,
+    state,
+    catalog,
+    styleTitles,
+    context,
+    sanitizeNote: sanitizeBookingNote,
+    getCartDetails: getAgentCartDetails
+  });
+  if (localIntent.handled) {
+    console.log('local');
     const { items, total } = getAgentCartDetails(state.cart);
     return jsonResponse({ reply: localIntent.reply, cart: items, total, readyForCheckout: state.readyForCheckout, note: state.note, provider: 'local', usedFallback: false }, 200, corsHeaders);
   }
@@ -605,16 +490,28 @@ async function handleAgentChat(request, env, corsHeaders) {
     const result = await callAI({ system: buildAgentSystemPrompt(styleTitles), messages: conversation, json: true, env });
     modelText = result.text;
     provider = result.provider;
+    console.log('ai');
   } catch (error) {
     if (!(error instanceof AIProviderError)) throw error;
+    console.log('fallback');
     usedFallback = true;
-    const fallbackIntent = parseLocalIntent(latestUser.text, state, context, styleTitles);
-    if (fallbackIntent.matched) {
+    const fallbackIntent = parseLocalIntent({
+      message: latestUser.text,
+      state,
+      catalog,
+      styleTitles,
+      context,
+      sanitizeNote: sanitizeBookingNote,
+      getCartDetails: getAgentCartDetails
+    });
+    if (fallbackIntent.handled) {
       const { items, total } = getAgentCartDetails(state.cart);
       return jsonResponse({ reply: fallbackIntent.reply, cart: items, total, readyForCheckout: state.readyForCheckout, note: state.note, provider: 'local', usedFallback }, 200, corsHeaders);
     }
     return jsonResponse({
-      reply: 'Our assistant is busy right now. You can add items with the buttons on the left.',
+      reply: language === 'pidgin'
+        ? 'Our assistant dey rest small. Abeg use the buttons for left side to add things.'
+        : 'Our assistant is busy right now. You can add items with the buttons on the left.',
       cart: getAgentCartDetails(state.cart).items,
       total: getAgentCartDetails(state.cart).total,
       readyForCheckout: false,

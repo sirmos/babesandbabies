@@ -57,6 +57,32 @@
 
       .back-link:hover, .back-link:focus-visible { text-decoration: underline; }
 
+      .cross-nav {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        padding: 9px 18px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        border-bottom: 1px solid var(--rose-line);
+        background: rgba(255, 253, 253, 0.92);
+      }
+
+      .cross-nav a {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 18px;
+        padding: 6px 11px;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .cross-nav a:hover, .cross-nav a[aria-current="page"] { background: var(--pink-pale); color: var(--pink-dark); }
+
       main {
         width: min(1180px, 100%);
         margin: 0 auto;
@@ -119,7 +145,7 @@
       .product {
         min-width: 0;
         display: grid;
-        grid-template-columns: 80px minmax(0, 1fr) auto;
+        grid-template-columns: 96px minmax(0, 1fr) auto;
         align-items: center;
         gap: 13px;
         padding: 10px;
@@ -130,12 +156,12 @@
 
       .thumbnail {
         position: relative;
-        width: 80px;
-        height: 80px;
+        width: 96px;
+        height: 96px;
         overflow: hidden;
         display: grid;
         place-items: center;
-        border: 1px solid #f0d4de;
+        border: 2px solid #c87591;
         border-radius: 8px;
         background: #fff;
         color: var(--muted);
@@ -143,7 +169,7 @@
         text-align: center;
       }
 
-      .thumbnail img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+      .thumbnail img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); background: #fff; }
       .thumbnail img[hidden] { display: none; }
       .product-meta { min-width: 0; }
       .product-meta h3 { margin: 0 0 4px; font-size: 0.96rem; line-height: 1.25; }
@@ -325,14 +351,18 @@
         .header-inner { padding: 0 14px; }
         main { padding: 20px 12px 36px; }
         h1 { font-size: 1.7rem; }
-        .product { grid-template-columns: 64px minmax(0, 1fr) auto; gap: 9px; padding: 8px; }
-        .thumbnail { width: 64px; height: 64px; }
+        .product { grid-template-columns: 96px minmax(0, 1fr) auto; gap: 9px; padding: 8px; }
         .product-meta h3 { font-size: 0.86rem; }
         .product-meta p { font-size: 0.72rem; }
         .button { padding-right: 10px; padding-left: 10px; }
         .cart-line { grid-template-columns: minmax(0, 1fr) auto; }
         .cart-line-total { grid-column: 2; }
         .cart-quantity { grid-column: 1; grid-row: 2; color: var(--muted); }
+      }
+
+      @media (max-width: 399.98px) {
+        .product { grid-template-columns: 80px minmax(0, 1fr) auto; }
+        .thumbnail { width: 80px; height: 80px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -346,6 +376,11 @@
         <a class="back-link" href="index.html">← Back to Babes &amp; Babies</a>
       </div>
     </header>
+    <nav class="cross-nav" aria-label="Explore Babes &amp; Babies">
+      <a href="shop.html" aria-current="page">Shop</a>
+      <a href="tryon.html#hair">Try a hairstyle</a>
+      <a href="tryon.html#skin">Skin analysis</a>
+    </nav>
 
     <main>
       <section class="intro" aria-labelledby="page-title">

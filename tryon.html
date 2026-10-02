@@ -76,6 +76,9 @@
       header h1 { font-size: 16px; }
       header .badge { display: none; }
     }
+    .cross-nav { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:9px max(14px, calc((100% - 980px) / 2)); border-bottom:1px solid #f0d4de; background:#fffdfd; }
+    .cross-nav a { min-height:34px; display:inline-flex; align-items:center; border-radius:18px; padding:6px 11px; color:#765d68; font-size:13px; font-weight:700; text-decoration:none; }
+    .cross-nav a:hover, .cross-nav a[aria-current="page"] { background:#fff0f5; color:#a82d59; }
   </style>
 </head>
 <body>
@@ -84,6 +87,11 @@
   <a href="index.html">← Back to Babes &amp; Babies</a>
   <h1>✨ AI Try-On <span class="badge">Powered by YouCam</span></h1>
 </header>
+<nav class="cross-nav" aria-label="Explore Babes &amp; Babies">
+  <a href="shop.html">Shop</a>
+  <a href="tryon.html#hair" data-section="hair" aria-current="page">Try a hairstyle</a>
+  <a href="tryon.html#skin" data-section="skin">Skin analysis</a>
+</nav>
 
 <div class="container">
 
@@ -310,6 +318,10 @@ function switchTab(tab, updateHash = true) {
   document.querySelectorAll('.tab-btn').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tab + '-section').classList.add('active');
+  document.querySelectorAll('.cross-nav [data-section]').forEach(link => {
+    if (link.dataset.section === tab) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
   if (updateHash) history.replaceState(null, '', '#' + tab);
   if (tab === 'hair') loadHairTemplates();
 }

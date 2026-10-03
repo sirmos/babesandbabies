@@ -6,7 +6,7 @@
     "price": "5.00",
     "type": "product",
     "description": "Gentle everyday lotion for soft, hydrated skin.",
-    "image": "images/products/baby_lotion.jpg"
+    "image": "images/products/baby_lotion.jpg?v=2"
   },
   {
     "id": "bath_gel",
@@ -15,7 +15,7 @@
     "price": "6.00",
     "type": "product",
     "description": "Mild cleansing bath gel for daily use.",
-    "image": "images/products/bath_gel.jpg"
+    "image": "images/products/bath_gel.jpg?v=2"
   },
   {
     "id": "baby_powder",
@@ -24,7 +24,7 @@
     "price": "4.50",
     "type": "product",
     "description": "Lightweight powder for a fresh, dry feel.",
-    "image": "images/products/baby_powder.jpg"
+    "image": "images/products/baby_powder.jpg?v=2"
   },
   {
     "id": "petroleum_jelly",
@@ -33,7 +33,7 @@
     "price": "3.50",
     "type": "product",
     "description": "Versatile skin barrier cream for dry areas.",
-    "image": "images/products/petroleum_jelly.jpg"
+    "image": "images/products/petroleum_jelly.jpg?v=2"
   },
   {
     "id": "baby_shampoo",
@@ -42,7 +42,7 @@
     "price": "5.50",
     "type": "product",
     "description": "Mild shampoo for gentle cleansing.",
-    "image": "images/products/baby_shampoo.jpg"
+    "image": "images/products/baby_shampoo.jpg?v=2"
   },
   {
     "id": "baby_oil",
@@ -51,7 +51,7 @@
     "price": "4.00",
     "type": "product",
     "description": "Lightweight oil to help lock in moisture.",
-    "image": "images/products/baby_oil.jpg"
+    "image": "images/products/baby_oil.jpg?v=2"
   },
   {
     "id": "diaper_rash_cream",
@@ -60,7 +60,7 @@
     "price": "7.00",
     "type": "product",
     "description": "Soothing cream for protection and comfort.",
-    "image": "images/products/diaper_rash_cream.jpg"
+    "image": "images/products/diaper_rash_cream.jpg?v=2"
   },
   {
     "id": "booking_deposit",
@@ -69,7 +69,7 @@
     "price": "20.00",
     "type": "service",
     "description": "Booking deposit for salon styling and appointment scheduling.",
-    "image": "images/products/booking_deposit.jpg"
+    "image": "images/products/booking_deposit.jpg?v=2"
   },
   {
     "id": "braiding_hair_1b",
@@ -78,7 +78,7 @@
     "price": "8.00",
     "type": "product",
     "description": "Everyday 1b braiding hair for neat protective styles.",
-    "image": "images/products/braiding_hair_1b.jpg"
+    "image": "images/products/braiding_hair_1b.jpg?v=2"
   },
   {
     "id": "braiding_hair_burgundy",
@@ -87,7 +87,7 @@
     "price": "8.00",
     "type": "product",
     "description": "Burgundy braiding hair for a rich pop of color.",
-    "image": "images/products/braiding_hair_burgundy.jpg"
+    "image": "images/products/braiding_hair_burgundy.jpg?v=2"
   },
   {
     "id": "passion_twist_hair",
@@ -96,7 +96,7 @@
     "price": "10.00",
     "type": "product",
     "description": "Soft, textured hair made for expressive passion twists.",
-    "image": "images/products/passion_twist_hair.jpg"
+    "image": "images/products/passion_twist_hair.jpg?v=2"
   },
   {
     "id": "kinky_twists_pack",
@@ -105,7 +105,7 @@
     "price": "10.00",
     "type": "product",
     "description": "A pack of textured extensions for lightweight kinky twists.",
-    "image": "images/products/kinky_twists_pack.jpg"
+    "image": "images/products/kinky_twists_pack.jpg?v=2"
   },
   {
     "id": "hair_clips_set",
@@ -114,7 +114,7 @@
     "price": "3.00",
     "type": "product",
     "description": "A handy set of clips for sectioning and styling hair.",
-    "image": "images/products/hair_clips_set.jpg"
+    "image": "images/products/hair_clips_set.jpg?v=2"
   },
   {
     "id": "edge_control",
@@ -123,7 +123,7 @@
     "price": "4.00",
     "type": "product",
     "description": "Smooth-hold edge control for polished hairstyles.",
-    "image": "images/products/edge_control.jpg"
+    "image": "images/products/edge_control.jpg?v=2"
   },
   {
     "id": "hair_gel_strong_hold",
@@ -132,7 +132,7 @@
     "price": "4.00",
     "type": "product",
     "description": "Strong-hold hair gel for sleek, long-lasting styles.",
-    "image": "images/products/hair_gel_strong_hold.jpg"
+    "image": "images/products/hair_gel_strong_hold.jpg?v=2"
   },
   {
     "id": "satin_bonnet",
@@ -141,6 +141,6 @@
     "price": "5.00",
     "type": "product",
     "description": "A satin bonnet to help protect hairstyles while you sleep.",
-    "image": "images/products/satin_bonnet.jpg"
+    "image": "images/products/satin_bonnet.jpg?v=2"
   }
 ]

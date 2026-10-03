@@ -159,6 +159,14 @@ function chatRequest(message, cart = []) {
   });
 }
 
+function cartValidationRequest(payload) {
+  return new Request('https://worker.test/shop/validate-cart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
 try {
   const localResponse = await worker.fetch(chatRequest('Abeg, add two baby powder'), {});
   const localBody = await localResponse.json();
@@ -179,9 +187,23 @@ try {
   assert.equal(fallbackBody.reply, 'Our assistant is busy right now. You can add items with the buttons on the left.');
   assert.equal(aiCalls, 0);
   assert.deepEqual(paths, ['local', 'local', 'fallback']);
+
+  const prefillResponse = await worker.fetch(cartValidationRequest({
+    items: [{ id: 'baby_lotion', qty: 1 }, { id: 'bath_gel', qty: 1 }],
+    style: 'Knotless braids'
+  }), {});
+  const prefillBody = await prefillResponse.json();
+  assert.equal(prefillResponse.status, 200);
+  assert.deepEqual(prefillBody.items.map(({ id, price }) => [id, price]), [['baby_lotion', 5], ['bath_gel', 6]]);
+  assert.equal(prefillBody.total, 11);
+  assert.equal(prefillBody.note, 'Knotless braids');
+  assert.equal(aiCalls, 0);
+
+  const invalidPrefill = await worker.fetch(cartValidationRequest({ items: [{ id: 'not-a-product', qty: 1 }] }), {});
+  assert.equal(invalidPrefill.status, 400);
 } finally {
   globalThis.fetch = originalFetch;
   console.log = originalConsoleLog;
 }
 
-console.log(`Passed ${cases.length + 11} parser and safety messages plus Worker route checks; no network was used.`);
+console.log('Passed parser, safety, and Worker route checks; no network was used.');

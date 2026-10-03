@@ -149,6 +149,7 @@
       <a id="hairBookLink" href="https://wa.me/2347065668695" target="_blank" rel="noopener noreferrer">
         <button class="btn" style="margin-top:16px;">📱 Book This Style on WhatsApp</button>
       </a>
+      <button class="btn" id="hairDepositBtn" type="button" onclick="shopBookingDeposit()">Pay booking deposit for this style</button>
     </div>
   </div>
 
@@ -173,6 +174,7 @@
       <h2>Your Skin Report (Mum's Skin)</h2>
       <div id="skinScores"></div>
       <div id="skinRec" style="margin-top:16px;"></div>
+      <button class="btn" id="skinShopBtn" type="button" onclick="shopSkinRecommendations()" hidden>Shop these products</button>
       <a href="https://wa.me/2347065668695?text=Hi! I just did the AI skin analysis and I want to order skincare products" target="_blank">
         <button class="btn" style="margin-top:16px;">📱 Order Products on WhatsApp</button>
       </a>
@@ -191,6 +193,16 @@ let hairTemplates = [];
 let salonStyles = [];
 let hairTemplatesLoaded = false;
 let hairCategory = 'Braids & natural';
+let skinProductPicks = [];
+let lowestSkinScores = [];
+const SKIN_PRODUCT_RULES = {
+  oiliness: 'baby_powder',
+  pore: 'baby_powder',
+  moisture: 'baby_lotion',
+  texture: 'baby_lotion',
+  acne: 'baby_shampoo',
+  radiance: 'baby_shampoo'
+};
 const hashParts = window.location.hash.slice(1).split('&');
 const requestedSalonStyleId = new URLSearchParams(hashParts.slice(1).join('&')).get('style');
 const BRAIDS_AND_NATURAL_TEMPLATE_IDS = new Set([
@@ -375,6 +387,33 @@ function checkHairReady() {
   document.getElementById('keepColorOption').classList.toggle('visible', selectedStyle?.source === 'salon');
 }
 
+function shopBookingDeposit() {
+  if (!selectedStyle) return;
+  const params = new URLSearchParams();
+  params.set('cart', 'booking_deposit:1');
+  params.set('style', selectedStyle.title || selectedStyle.name || '');
+  window.location.href = 'shop.html#' + params.toString();
+}
+
+function shopSkinRecommendations() {
+  if (!skinProductPicks.length || !lowestSkinScores.length) return;
+  const params = new URLSearchParams();
+  params.set('cart', skinProductPicks.map(id => `${id}:1`).join(','));
+  params.set('skin', lowestSkinScores.map(([key, value]) => `${key}:${value}`).join(','));
+  window.location.href = 'shop.html#' + params.toString();
+}
+
+function getRuleBasedSkinPicks(scores) {
+  const lowest = Object.entries(scores || {})
+    .filter(([key, value]) => Object.hasOwn(SKIN_PRODUCT_RULES, key) && typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100)
+    .sort((first, second) => first[1] - second[1])
+    .slice(0, 2);
+  return {
+    scores: lowest,
+    products: [...new Set(lowest.map(([key]) => SKIN_PRODUCT_RULES[key]))].slice(0, 2)
+  };
+}
+
 async function runHairTryOn() {
   const btn = document.getElementById('hairBtn');
   const status = document.getElementById('hairStatus');
@@ -450,6 +489,9 @@ async function runSkinAnalysis() {
     if (data.recommendationError) console.error('Gemini recommendation error:', data.recommendationError);
 
     if (data.scores) {
+      const skinPicks = getRuleBasedSkinPicks(data.scores);
+      lowestSkinScores = skinPicks.scores;
+      skinProductPicks = skinPicks.products;
       const scoreDiv = document.getElementById('skinScores');
       scoreDiv.innerHTML = Object.entries(data.scores).map(([k, v]) => `
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
@@ -466,6 +508,7 @@ async function runSkinAnalysis() {
       const recommendationText = document.createElement('p');
       recommendationText.textContent = (data.recommendation || '').replace(/\*/g, '');
       recommendationContainer.replaceChildren(recommendationHeading, recommendationText);
+      document.getElementById('skinShopBtn').hidden = skinProductPicks.length === 0;
       document.getElementById('skinResultCard').style.display = 'block';
       status.textContent = 'Analysis complete!';
     } else {

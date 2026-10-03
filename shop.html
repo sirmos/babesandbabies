@@ -319,6 +319,9 @@
       .checkout-area { padding: 0 16px 16px; }
       .checkout-prompt { margin: 0 0 12px; color: var(--green); font-weight: 700; }
       .checkout-prompt[hidden], #paypal-button-container[hidden] { display: none; }
+      .prefill-status { margin: 12px 0 0; color: var(--green); font-size: 0.84rem; line-height: 1.45; }
+      .prefill-status[hidden], .confirmation-wa[hidden] { display: none; }
+      .confirmation-wa { display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; text-decoration: none; }
       .try-style-link { display: inline-block; margin-bottom: 10px; color: var(--pink-dark); font-size: 0.84rem; font-weight: 700; }
       .try-style-link[hidden] { display: none; }
       .payment-note { margin: 10px 0 0; color: var(--muted); font-size: 0.76rem; line-height: 1.45; }
@@ -432,6 +435,7 @@
               <p id="cart-empty" class="cart-empty">Your cart is empty.</p>
               <ul id="cart-lines" class="cart-lines"></ul>
               <div class="cart-total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
+              <p id="prefill-status" class="prefill-status" hidden></p>
             </div>
             <div id="checkout-area" class="checkout-area">
               <p id="checkout-prompt" class="checkout-prompt" hidden>Review your cart, then pay with PayPal</p>
@@ -445,6 +449,7 @@
           <section id="confirmation" class="panel confirmation" aria-live="polite" hidden>
             <h2>Payment received</h2>
             <p>Amount paid: <span id="confirmation-amount"></span></p>
+            <a id="whatsapp-order" class="button confirmation-wa" href="https://wa.me/2347065668695" target="_blank" rel="noopener noreferrer" hidden>Send my order to the shop on WhatsApp</a>
             <nav class="confirmation-links" aria-label="After payment">
               <a href="index.html">Back to Babes &amp; Babies</a>
               <a id="continue-shopping" href="#catalog-title">Continue shopping</a>
@@ -456,6 +461,58 @@
 
     <script>
       const WORKER_URL = 'https://babesandbabies-chat.babesandbabies.workers.dev';
+      const hashPrefill = readHashPrefill();
+      const hashHasCart = new URLSearchParams(window.location.hash.slice(1)).has('cart');
+      if (hashHasCart) history.replaceState(null, '', window.location.pathname + window.location.search);
+
+      function sanitizeStyle(value) {
+        return String(value || '').replace(/[^A-Za-z0-9 .,!?\'"()&/:;-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
+      }
+
+      function readHashPrefill() {
+        const rawHash = window.location.hash.slice(1);
+        if (!rawHash) return null;
+        try {
+          const params = new URLSearchParams(rawHash);
+          const allowedKeys = new Set(['cart', 'style', 'skin']);
+          if (!params.has('cart') || [...params.keys()].some((key) => !allowedKeys.has(key))) return null;
+          if ([...allowedKeys].some((key) => params.getAll(key).length > 1)) return null;
+
+          const rawItems = params.get('cart').split(',');
+          if (!rawItems.length || rawItems.length > 10) return null;
+          const seenIds = new Set();
+          const items = [];
+          for (const rawItem of rawItems) {
+            const match = rawItem.match(/^([a-z0-9_]+):(10|[1-9])$/);
+            if (!match || seenIds.has(match[1])) return null;
+            seenIds.add(match[1]);
+            items.push({ id: match[1], qty: Number(match[2]) });
+          }
+
+          let style = '';
+          if (params.has('style')) {
+            style = sanitizeStyle(params.get('style'));
+            if (!style) return null;
+          }
+
+          let skin;
+          if (params.has('skin')) {
+            skin = {};
+            const fields = params.get('skin').split(',');
+            if (!fields.length || fields.length > 2) return null;
+            for (const field of fields) {
+              const match = field.match(/^(radiance|oiliness|texture|pore|acne|moisture):((?:\d+(?:\.\d+)?|\.\d+))$/);
+              const value = match ? Number(match[2]) : NaN;
+              if (!match || Object.hasOwn(skin, match[1]) || !Number.isFinite(value) || value < 0 || value > 100) return null;
+              skin[match[1]] = value;
+            }
+          }
+          return { items, style, skin };
+        } catch (error) {
+          return null;
+        }
+      }
+
       const state = {
         catalog: [],
         messages: [],
@@ -467,7 +524,8 @@
         clientId: '',
         busy: false,
         paypalReady: false,
-        paypalRendered: false
+        paypalRendered: false,
+        pendingOrder: null
       };
 
       const catalogElement = document.getElementById('catalog');
@@ -485,6 +543,8 @@
       const paypalContainer = document.getElementById('paypal-button-container');
       const paymentStatus = document.getElementById('payment-status');
       const confirmation = document.getElementById('confirmation');
+      const prefillStatus = document.getElementById('prefill-status');
+      const welcomeMessage = messagesElement.querySelector('.message.assistant');
 
       function money(value) {
         return Number(value || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -493,7 +553,7 @@
       function cleanContext(value) {
         if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
         const result = {};
-        if (typeof value.style === 'string' && value.style.trim()) result.style = value.style.trim().slice(0, 60);
+        if (typeof value.style === 'string' && sanitizeStyle(value.style)) result.style = sanitizeStyle(value.style);
         if (value.skin && typeof value.skin === 'object' && !Array.isArray(value.skin)) {
           const skin = {};
           for (const key of ['radiance', 'oiliness', 'texture', 'pore', 'acne', 'moisture']) {
@@ -506,27 +566,7 @@
       }
 
       function readContext() {
-        const hash = window.location.hash.slice(1);
-        if (hash) {
-          try {
-            const params = new URLSearchParams(hash);
-            if (params.has('context')) {
-              const context = cleanContext(JSON.parse(params.get('context')));
-              if (context) return context;
-            }
-            const fromParams = cleanContext({
-              style: params.get('context.style') || params.get('style') || '',
-              skin: params.has('skin') ? JSON.parse(params.get('skin')) : undefined
-            });
-            if (fromParams) return fromParams;
-          } catch (error) {
-          }
-        }
-        try {
-          return cleanContext(JSON.parse(sessionStorage.getItem('shopContext') || 'null')) || {};
-        } catch (error) {
-          return {};
-        }
+        return cleanContext({ style: hashPrefill?.style, skin: hashPrefill?.skin }) || {};
       }
 
       function appendMessage(role, text, isError = false) {
@@ -670,6 +710,49 @@
         renderCart();
       }
 
+      function updateAssistantWelcome() {
+        const products = state.cart.filter((item) => item.id !== 'booking_deposit');
+        if (state.context.skin && products.length) {
+          const names = products.slice(0, 2).map((item) => item.name);
+          const productNames = names.length === 2 ? `${names[0]} and ${names[1]}` : names[0];
+          welcomeMessage.textContent = `I've added ${productNames} from your skin report. You can change anything before you pay.`;
+        } else {
+          welcomeMessage.textContent = 'Welcome to Babes & Babies. What can I help you find today?';
+        }
+      }
+
+      async function applyHashPrefill() {
+        if (!hashPrefill || !hashPrefill.items.every((item) => state.catalog.some((product) => product.id === item.id))) return;
+        const response = await fetch(`${WORKER_URL}/shop/validate-cart`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: hashPrefill.items, style: hashPrefill.style })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !Array.isArray(data.items) || !Number.isFinite(data.total)) {
+          throw new Error(data.error || 'The prefilled cart could not be validated.');
+        }
+        const normalizedItems = data.items.map((item) => {
+          const product = state.catalog.find((entry) => entry.id === item.id);
+          if (!product || !Number.isInteger(item.qty) || item.qty < 1 || item.qty > 10 || Number(item.price) !== Number(product.price)) {
+            throw new Error('The prefilled cart could not be validated.');
+          }
+          return { ...item, price: Number(item.price), lineTotal: Number(item.lineTotal) };
+        });
+        if (normalizedItems.length !== hashPrefill.items.length || normalizedItems.length > 10) {
+          throw new Error('The prefilled cart could not be validated.');
+        }
+        state.cart = normalizedItems;
+        state.total = data.total;
+        state.note = typeof data.note === 'string' ? sanitizeStyle(data.note) : '';
+        state.readyForCheckout = state.cart.length > 0;
+        prefillStatus.textContent = hashPrefill.skin
+          ? 'I added the products from your skin report. You can change anything before you pay.'
+          : `I added the booking deposit${state.note ? ` for ${state.note}` : ''}. You can change anything before you pay.`;
+        prefillStatus.hidden = false;
+        updateAssistantWelcome();
+      }
+
       function showPaymentError(message) {
         paymentStatus.textContent = message;
       }
@@ -739,6 +822,10 @@
             });
             const data = await response.json().catch(() => ({}));
             if (!response.ok || !data.orderId) throw new Error(data.error || 'Unable to create PayPal order.');
+            state.pendingOrder = {
+              items: Array.isArray(data.items) ? data.items.map(({ name, qty }) => ({ name: String(name), qty: Number(qty) })) : state.cart.map(({ name, qty }) => ({ name, qty })),
+              note: state.note
+            };
             return data.orderId;
           },
           onApprove: async (data) => {
@@ -750,6 +837,22 @@
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.error || 'Payment capture failed.');
             document.getElementById('confirmation-amount').textContent = money(result.amount);
+            const firstName = typeof result.payerName === 'string' ? result.payerName.trim().split(/\s+/)[0] : '';
+            const orderId = String(result.orderId || data.orderID || '');
+            const orderedItems = state.pendingOrder?.items || state.cart;
+            const orderNote = state.pendingOrder ? state.pendingOrder.note : state.note;
+            const orderMessage = [
+              'Hi! I just paid for my order at Babes & Babies.',
+              firstName && firstName !== 'PayPal' ? `Name: ${firstName}` : '',
+              'Items:',
+              ...orderedItems.map((item) => `${item.name} x ${item.qty}`),
+              orderNote ? `Style: ${orderNote}` : '',
+              `Total: ${money(result.amount)} USD`,
+              `PayPal order ID: ${orderId}`
+            ].filter(Boolean).join('\n');
+            const whatsappOrder = document.getElementById('whatsapp-order');
+            whatsappOrder.href = `https://wa.me/2347065668695?text=${encodeURIComponent(orderMessage)}`;
+            whatsappOrder.hidden = false;
             document.querySelector('.layout').hidden = true;
             document.querySelector('.intro').hidden = true;
             confirmation.hidden = false;
@@ -772,6 +875,13 @@
         const config = await configResponse.json();
         state.clientId = typeof config.clientId === 'string' ? config.clientId : '';
         renderCatalog();
+        if (hashPrefill) {
+          try {
+            await applyHashPrefill();
+          } catch (error) {
+            paymentStatus.textContent = error.message || 'The prefilled cart could not be validated.';
+          }
+        }
         renderCart();
         loadPayPalSdk();
       }
@@ -794,6 +904,8 @@
         state.total = 0;
         state.readyForCheckout = false;
         state.note = '';
+        state.pendingOrder = null;
+        prefillStatus.hidden = true;
         state.messages = [];
         messagesElement.replaceChildren();
         appendMessage('assistant', 'Welcome to Babes & Babies. What can I help you find today?');

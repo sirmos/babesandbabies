@@ -361,6 +361,11 @@ function validateAgentContext(context) {
   return result;
 }
 
+function sanitizePrefillStyle(value) {
+  if (typeof value !== 'string') return '';
+  return value.replace(/[^A-Za-z0-9 .,!?\'"()&/:;-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
+}
+
 function parseAgentJson(text) {
   const withoutFences = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
   try {
@@ -565,6 +570,32 @@ export default {
 
       if (path === '/agent/chat' && request.method === 'POST') {
         return await handleAgentChat(request, env, corsHeaders);
+      }
+
+      if (path === '/shop/validate-cart' && request.method === 'POST') {
+        let payload;
+        try {
+          payload = await request.json();
+        } catch (error) {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400, corsHeaders);
+        }
+
+        let normalizedItems;
+        try {
+          normalizedItems = validateCatalogItems(payload?.items || []);
+          if (new Set(normalizedItems.map((item) => item.id)).size !== normalizedItems.length) {
+            throw new Error('Duplicate cart lines are not allowed');
+          }
+        } catch (error) {
+          return jsonResponse({ error: error.message }, 400, corsHeaders);
+        }
+
+        const total = normalizedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+        return jsonResponse({
+          items: normalizedItems,
+          total,
+          note: sanitizePrefillStyle(payload?.style)
+        }, 200, corsHeaders);
       }
 
       if (path === '/shop/catalog' && request.method === 'GET') {

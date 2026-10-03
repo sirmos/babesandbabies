@@ -435,6 +435,10 @@
               <p id="cart-empty" class="cart-empty">Your cart is empty.</p>
               <ul id="cart-lines" class="cart-lines"></ul>
               <div class="cart-total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
+              <div id="saved-cart-notice" hidden>
+                <p>We saved your cart from your last visit.</p>
+                <button id="clear-saved-cart" class="button" type="button">Clear cart</button>
+              </div>
               <p id="prefill-status" class="prefill-status" hidden></p>
             </div>
             <div id="checkout-area" class="checkout-area">
@@ -461,6 +465,8 @@
 
     <script>
       const WORKER_URL = 'https://babesandbabies-chat.babesandbabies.workers.dev';
+      const CART_STORAGE_KEY = 'bb_cart_v1';
+      const MAX_CART_AGE = 7 * 24 * 60 * 60 * 1000;
       const hashPrefill = readHashPrefill();
       const hashHasCart = new URLSearchParams(window.location.hash.slice(1)).has('cart');
       if (hashHasCart) history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -544,7 +550,89 @@
       const paymentStatus = document.getElementById('payment-status');
       const confirmation = document.getElementById('confirmation');
       const prefillStatus = document.getElementById('prefill-status');
+      const savedCartNotice = document.getElementById('saved-cart-notice');
       const welcomeMessage = messagesElement.querySelector('.message.assistant');
+
+      function readSavedCart(rawValue) {
+        try {
+          const saved = JSON.parse(rawValue);
+          if (!saved || typeof saved !== 'object' || Array.isArray(saved)
+            || !Array.isArray(saved.items) || saved.items.length > 10
+            || !Number.isFinite(saved.savedAt) || saved.savedAt > Date.now()
+            || Date.now() - saved.savedAt > MAX_CART_AGE) return null;
+
+          const itemsById = new Map();
+          let note = '';
+          for (const item of saved.items) {
+            if (!item || typeof item.id !== 'string' || !/^[a-z0-9_]+$/.test(item.id)
+              || !Number.isInteger(item.qty) || item.qty < 1 || item.qty > 10) continue;
+            if (item.id === 'booking_deposit' && typeof item.note === 'string') note = sanitizeStyle(item.note);
+            const existing = itemsById.get(item.id) || 0;
+            itemsById.set(item.id, Math.min(10, existing + item.qty));
+          }
+          return { items: [...itemsById].map(([id, qty]) => ({ id, qty })), note };
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function getStoredCart() {
+        try {
+          return readSavedCart(window.localStorage.getItem(CART_STORAGE_KEY));
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function saveCart() {
+        const items = state.cart.map(({ id, qty }) => {
+          const item = { id, qty };
+          if (id === 'booking_deposit' && state.note) item.note = sanitizeStyle(state.note);
+          return item;
+        });
+        try {
+          window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ items, savedAt: Date.now() }));
+        } catch (error) {}
+      }
+
+      function removeSavedCart() {
+        try {
+          window.localStorage.removeItem(CART_STORAGE_KEY);
+        } catch (error) {}
+      }
+
+      async function restoreSavedCart(saved, showNotice = true) {
+        if (!saved) return false;
+        const knownItems = saved.items.filter((item) => state.catalog.some((product) => product.id === item.id));
+        let validatedItems = [];
+        let validatedNote = '';
+        if (knownItems.length) {
+          const response = await fetch(`${WORKER_URL}/shop/validate-cart`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: knownItems, style: saved.note })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !Array.isArray(data.items) || !Number.isFinite(data.total)) {
+            throw new Error(data.error || 'The saved cart could not be validated.');
+          }
+          validatedItems = data.items.map((item) => {
+            const product = state.catalog.find((entry) => entry.id === item.id);
+            if (!product || !Number.isInteger(item.qty) || item.qty < 1 || item.qty > 10
+              || Number(item.price) !== Number(product.price)) throw new Error('The saved cart could not be validated.');
+            return { ...item, price: Number(item.price), lineTotal: Number(item.lineTotal) };
+          });
+          if (validatedItems.length !== knownItems.length) throw new Error('The saved cart could not be validated.');
+          validatedNote = typeof data.note === 'string' ? sanitizeStyle(data.note) : '';
+        }
+        state.cart = validatedItems;
+        state.total = validatedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+        state.note = validatedItems.some((item) => item.id === 'booking_deposit') ? validatedNote : '';
+        state.readyForCheckout = validatedItems.length > 0;
+        savedCartNotice.hidden = !showNotice || validatedItems.length === 0;
+        renderCart();
+        return true;
+      }
 
       function money(value) {
         return Number(value || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -742,10 +830,20 @@
         if (normalizedItems.length !== hashPrefill.items.length || normalizedItems.length > 10) {
           throw new Error('The prefilled cart could not be validated.');
         }
-        state.cart = normalizedItems;
-        state.total = data.total;
-        state.note = typeof data.note === 'string' ? sanitizeStyle(data.note) : '';
+        const mergedItems = new Map(state.cart.map((item) => [item.id, item]));
+        for (const item of normalizedItems) {
+          const existing = mergedItems.get(item.id);
+          if (existing) {
+            existing.qty = Math.min(10, existing.qty + item.qty);
+            existing.lineTotal = existing.price * existing.qty;
+          }
+          else if (mergedItems.size < 10) mergedItems.set(item.id, item);
+        }
+        state.cart = [...mergedItems.values()];
+        state.total = state.cart.reduce((sum, item) => sum + item.lineTotal, 0);
+        if (hashPrefill.style) state.note = typeof data.note === 'string' ? sanitizeStyle(data.note) : state.note;
         state.readyForCheckout = state.cart.length > 0;
+        saveCart();
         prefillStatus.textContent = hashPrefill.skin
           ? 'I added the products from your skin report. You can change anything before you pay.'
           : `I added the booking deposit${state.note ? ` for ${state.note}` : ''}. You can change anything before you pay.`;
@@ -777,6 +875,11 @@
           state.total = Number.isFinite(data.total) ? data.total : 0;
           state.readyForCheckout = data.readyForCheckout === true;
           state.note = typeof data.note === 'string' ? data.note.slice(0, 140) : '';
+          saveCart();
+          if (!state.cart.length) {
+            savedCartNotice.hidden = true;
+            prefillStatus.hidden = true;
+          }
           state.messages.push({ role: 'assistant', text: String(data.reply || '') });
           appendMessage('assistant', String(data.reply || 'I’m here to help you shop.'));
           renderCart();
@@ -836,6 +939,7 @@
             });
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.error || 'Payment capture failed.');
+            removeSavedCart();
             document.getElementById('confirmation-amount').textContent = money(result.amount);
             const firstName = typeof result.payerName === 'string' ? result.payerName.trim().split(/\s+/)[0] : '';
             const orderId = String(result.orderId || data.orderID || '');
@@ -875,6 +979,14 @@
         const config = await configResponse.json();
         state.clientId = typeof config.clientId === 'string' ? config.clientId : '';
         renderCatalog();
+        const savedCart = getStoredCart();
+        if (savedCart) {
+          try {
+            await restoreSavedCart(savedCart);
+          } catch (error) {
+            paymentStatus.textContent = error.message || 'The saved cart could not be validated.';
+          }
+        }
         if (hashPrefill) {
           try {
             await applyHashPrefill();
@@ -895,6 +1007,34 @@
         button.addEventListener('click', () => sendMessage(button.dataset.message || ''));
       });
 
+      document.getElementById('clear-saved-cart').addEventListener('click', () => {
+        state.cart = [];
+        state.total = 0;
+        state.readyForCheckout = false;
+        state.note = '';
+        savedCartNotice.hidden = true;
+        prefillStatus.hidden = true;
+        removeSavedCart();
+        renderCart();
+      });
+
+      window.addEventListener('storage', (event) => {
+        if (event.key !== CART_STORAGE_KEY) return;
+        if (event.newValue === null) {
+          state.cart = [];
+          state.total = 0;
+          state.readyForCheckout = false;
+          state.note = '';
+          savedCartNotice.hidden = true;
+          prefillStatus.hidden = true;
+          renderCart();
+          return;
+        }
+        const savedCart = readSavedCart(event.newValue);
+        if (!savedCart) return;
+        restoreSavedCart(savedCart).catch(() => {});
+      });
+
       document.getElementById('continue-shopping').addEventListener('click', (event) => {
         event.preventDefault();
         confirmation.hidden = true;
@@ -904,6 +1044,8 @@
         state.total = 0;
         state.readyForCheckout = false;
         state.note = '';
+        savedCartNotice.hidden = true;
+        removeSavedCart();
         state.pendingOrder = null;
         prefillStatus.hidden = true;
         state.messages = [];

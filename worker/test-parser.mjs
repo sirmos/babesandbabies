@@ -68,6 +68,14 @@ const cases = [
   { message: 'I wan buy two petroleum jelly', id: 'petroleum_jelly', qty: 2, language: 'pidgin' },
   { message: 'make i get one diaper cream', id: 'diaper_rash_cream', qty: 1, language: 'pidgin' },
   { message: 'add baby lotion and powder', multiple: [['baby_lotion', 1], ['baby_powder', 1]] },
+  { message: 'add braiding hair', id: 'braiding_hair_1b', qty: 1 },
+  { message: 'buy burgundy braiding hair', id: 'braiding_hair_burgundy', qty: 1 },
+  { message: 'get passion twists', id: 'passion_twist_hair', qty: 1 },
+  { message: 'add kinky twists', id: 'kinky_twists_pack', qty: 1 },
+  { message: 'buy hair clips', id: 'hair_clips_set', qty: 1 },
+  { message: 'add edge control', id: 'edge_control', qty: 1 },
+  { message: 'get hair gel', id: 'hair_gel_strong_hold', qty: 1 },
+  { message: 'add a bonnet', id: 'satin_bonnet', qty: 1 },
   { message: 'add powder and 11 lotion', over: true },
   { message: 'add 2 lotion', id: 'baby_lotion', qty: 2, existing: [{ id: 'baby_lotion', qty: 9 }], over: true }
 ];
@@ -201,6 +209,16 @@ try {
 
   const invalidPrefill = await worker.fetch(cartValidationRequest({ items: [{ id: 'not-a-product', qty: 1 }] }), {});
   assert.equal(invalidPrefill.status, 400);
+
+  const hairPrefill = await worker.fetch(cartValidationRequest({ items: [{ id: 'satin_bonnet', qty: 2 }] }), {});
+  const hairBody = await hairPrefill.json();
+  assert.equal(hairPrefill.status, 200);
+  assert.equal(hairBody.items[0].id, 'satin_bonnet');
+
+  const catalogResponse = await worker.fetch(new Request('https://worker.test/shop/catalog'), {});
+  const catalogBody = await catalogResponse.json();
+  assert.equal(catalogBody.find((item) => item.id === 'satin_bonnet').category, 'hair');
+  assert.equal(catalogBody.find((item) => item.id === 'satin_bonnet').image, 'https://babesandbabies-dcb39.web.app/images/products/satin_bonnet.jpg');
 } finally {
   globalThis.fetch = originalFetch;
   console.log = originalConsoleLog;

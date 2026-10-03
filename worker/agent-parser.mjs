@@ -11,7 +11,15 @@ const productAliases = {
   baby_shampoo: ['baby shampoo', 'shampoo'],
   baby_oil: ['baby oil', 'oil'],
   diaper_rash_cream: ['diaper rash cream', 'rash cream', 'diaper cream', 'nappy cream'],
-  booking_deposit: ['booking deposit', 'deposit', 'booking']
+  booking_deposit: ['booking deposit', 'deposit', 'booking'],
+  braiding_hair_1b: ['braiding hair 1b', '1b braiding hair', 'braiding hair'],
+  braiding_hair_burgundy: ['braiding hair burgundy', 'burgundy braiding hair'],
+  passion_twist_hair: ['passion twist hair', 'passion twists'],
+  kinky_twists_pack: ['kinky twists pack', 'kinky twists'],
+  hair_clips_set: ['hair clips set', 'hair clips'],
+  edge_control: ['edge control'],
+  hair_gel_strong_hold: ['hair gel strong hold', 'hair gel'],
+  satin_bonnet: ['satin bonnet', 'bonnet']
 };
 
 const pidginSignals = [
@@ -175,7 +183,8 @@ export function parseLocalIntent({
   const checkout = /\b(?:pay|checkout|check out)\b|\bi\s+want\s+to\s+pay\b/.test(normalized);
   const bookingIntent = /\b(deposit|booking|book|appointment)\b/.test(normalized);
   const title = findStyle(normalized, styleTitles);
-  const genericBraiding = /\b(braiding|braid)\b/.test(normalized) && !title;
+  const genericBraiding = /\b(braiding|braid)\b/.test(normalized) && !title
+    && !mentions.some(({ id }) => id.startsWith('braiding_hair_'));
   const asksForBooking = bookingIntent || genericBraiding;
   const hasShoppingIntent = hasAddIntent || hasRemoveIntent || asksForBooking;
 

@@ -600,9 +600,10 @@ export default {
 
       if (path === '/shop/catalog' && request.method === 'GET') {
         return jsonResponse(
-          catalog.map(({ id, name, price, type, description, image }) => ({
+          catalog.map(({ id, name, category, price, type, description, image }) => ({
             id,
             name,
+            category,
             price,
             type,
             description,

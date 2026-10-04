@@ -70,6 +70,19 @@ globalThis.fetch = async (url, opts = {}) => {
     if (id === 'NOTDONE12345') {
       return new Response(JSON.stringify({ id, status: 'APPROVED', purchase_units: [] }), { status: 200 });
     }
+    if (id === 'PLAINORDER123') {
+      return new Response(JSON.stringify({
+        id,
+        status: 'COMPLETED',
+        payer: { name: { given_name: 'Ada' } },
+        purchase_units: [{
+          description: 'Babes & Babies checkout',
+          amount: { value: '8.00', currency_code: 'USD' },
+          items: [{ name: 'Braiding hair \u2014 1b', quantity: '1', unit_amount: { value: '8.00' } }],
+          payments: { captures: [{ id: 'CAP2', status: 'COMPLETED', amount: { value: '8.00', currency_code: 'USD' }, create_time: new Date().toISOString() }] },
+        }],
+      }), { status: 200 });
+    }
     return new Response(JSON.stringify({
       id,
       status: 'COMPLETED',
@@ -119,6 +132,10 @@ console.log('capture hook and verification');
   let threw = false;
   try { await recordOrder(env, 'NOTDONE12345'); } catch { threw = true; }
   check('an order PayPal has not completed is rejected', threw && env.DB.rows.length === 1);
+  await recordOrder(env, 'PLAINORDER123');
+  const plain = env.DB.rows.find((r) => r.order_id === 'PLAINORDER123');
+  check('default PayPal text is not saved as a style note', plain && plain.note === '' && plain.kind === 'Products');
+  env.DB.rows.splice(env.DB.rows.findIndex((r) => r.order_id === 'PLAINORDER123'), 1);
   const skipped = await afterCapture(new Request(BASE + '/shop/catalog'), new Response('{}'), env, ctx);
   check('other routes are ignored', skipped.status === 200 && env.DB.rows.length === 1);
 }

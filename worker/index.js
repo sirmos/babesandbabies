@@ -1088,7 +1088,7 @@ export default {
   async fetch(request, env, ctx) {
     const askAI = async (system, text) => {
       if (typeof callAI !== 'function') throw new Error('AI chain unavailable');
-      const r = await callAI({ system, messages: [{ role: 'user', text, content: text }] });
+      const r = await callAI({ system, messages: [{ role: 'user', text }], env });
       return (r && (r.text || r.reply)) || '';
     };
     const adminRes = await adminFetch(request, env, ctx, askAI);

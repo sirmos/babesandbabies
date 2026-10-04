@@ -103,7 +103,8 @@ export async function recordOrder(env, orderId) {
   const total = Number((capture.amount && capture.amount.value) || (unit.amount && unit.amount.value) || 0);
   const currency = String((capture.amount && capture.amount.currency_code) || 'USD').slice(0, 3);
   const createdAt = String(capture.create_time || new Date().toISOString());
-  const note = String(unit.description || '').slice(0, 140);
+  const rawNote = String(unit.description || '').trim();
+  const note = rawNote === 'Babes & Babies checkout' ? '' : rawNote.slice(0, 140); // default text is not a style note
   const payerName = order.payer && order.payer.name && order.payer.name.given_name;
   const firstName = String(payerName || '').slice(0, 40); // first name only, no email or address is stored
 

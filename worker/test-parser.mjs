@@ -138,7 +138,9 @@ assert.equal(run('I wan book braiding').reply, 'Which style you want? Examples: 
 const workerSource = await readFile(new URL('./index.js', import.meta.url), 'utf8');
 const parserUrl = new URL('./agent-parser.mjs', import.meta.url).href;
 const parserImport = "import { agentSafetyReply, detectAgentLanguage, isAgentSafetyRequest, parseLocalIntent, sanitizeAgentNote as sanitizeBookingNote } from './agent-parser.mjs';";
+const ordersUrl = new URL('./orders.mjs', import.meta.url).href;
 const workerTestSource = workerSource
+  .replace("import { adminFetch, afterCapture } from './orders.mjs';", `const { adminFetch, afterCapture } = await import(${JSON.stringify(ordersUrl)});`)
   .replace("import catalog from './catalog.json';", `const catalog = ${JSON.stringify(catalog)};`)
   .replace(parserImport, `const { agentSafetyReply, detectAgentLanguage, isAgentSafetyRequest, parseLocalIntent, sanitizeAgentNote: sanitizeBookingNote } = await import(${JSON.stringify(parserUrl)});`);
 assert.notEqual(workerTestSource, workerSource, 'worker imports should be replaced for the offline test');

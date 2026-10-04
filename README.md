@@ -178,8 +178,18 @@ See [`styles/README.md`](styles/README.md). Add the display photo to `styles/sty
 
 ---
 
-## Privacy
+## Owner dashboard
 
+Paid orders are saved in a Cloudflare D1 database and shown in an AG Grid table at `/orders.html`.
+
+- **Read-only demo view:** https://babesandbabies-dcb39.web.app/orders.html#token=babes-judge-view (the token is for test data only)
+- **Owner view:** the same page with a private owner token, which can also change an order's status
+- After a PayPal capture, the Worker looks the order up on PayPal, saves it only if PayPal says it's completed, and stores items, style note, total and the buyer's first name (no email or address)
+- An "Ask about your orders" assistant answers from the order data through the AI provider chain, with a rules-based fallback
+- Optional: a PayPal webhook route (`/paypal/webhook`) verifies PayPal's signature and marks orders "Verified + webhook"
+
+Extra setup for this part: `wrangler d1 create babes-orders`, add the `DB` binding to `wrangler.toml`, run `worker/schema.sql`, and set the secrets `ORDERS_ADMIN_TOKEN` and `ORDERS_VIEW_TOKEN` (and `PAYPAL_WEBHOOK_ID` if you use the webhook). Run `node worker/test-orders.mjs` for the offline checks.
+## Privacy
 - The site has no user accounts and no database. The Worker doesn't store photos.
 - Photos go to YouCam only to produce the result, and are subject to YouCam's data policy.
 - Shop chat messages that the local parser can't handle are sent to an AI provider (Gemini or Cloudflare Workers AI) to produce a reply. Please don't type personal details into the chat.

@@ -1,3 +1,4 @@
+import { adminFetch, afterCapture } from './orders.mjs';
 import catalog from './catalog.json';
 import { agentSafetyReply, detectAgentLanguage, isAgentSafetyRequest, parseLocalIntent, sanitizeAgentNote as sanitizeBookingNote } from './agent-parser.mjs';
 
@@ -546,7 +547,7 @@ async function handleAgentChat(request, env, corsHeaders) {
   return jsonResponse({ reply, cart: items, total, readyForCheckout: state.readyForCheckout && items.length > 0, note: state.note, provider, usedFallback }, 200, corsHeaders);
 }
 
-export default {
+const baseWorker = {
   async fetch(request, env) {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
@@ -1080,5 +1081,20 @@ export default {
     } catch (error) {
       return jsonResponse({ error: error.message }, 500, corsHeaders);
     }
+  }
+};
+
+export default {
+  async fetch(request, env, ctx) {
+    const askAI = async (system, text) => {
+      if (typeof callAI !== 'function') throw new Error('AI chain unavailable');
+      const r = await callAI({ system, messages: [{ role: 'user', text, content: text }] });
+      return (r && (r.text || r.reply)) || '';
+    };
+    const adminRes = await adminFetch(request, env, ctx, askAI);
+    if (adminRes) return adminRes;
+    const reqCopy = request.clone();
+    const res = await baseWorker.fetch(request, env, ctx);
+    return afterCapture(reqCopy, res, env, ctx);
   }
 };

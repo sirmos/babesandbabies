@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Orders · Babes & Babies</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
+<style>
+  :root { --pink:#e8447c; --pink-dark:#c2336a; --pink-soft:#fdeef4; --ink:#2a1f26; --muted:#6f5d67; --line:#f3cfdd; --green:#1f9d6e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background:#fff6f9; color:var(--ink); }
+  header { background:var(--pink); color:#fff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  header a { color:#fff; text-decoration:none; font-weight:600; font-size:14px; }
+  header h1 { font-size:17px; margin:0; }
+  .role { font-size:12px; background:rgba(255,255,255,.2); padding:4px 10px; border-radius:999px; }
+  main { max-width:1200px; margin:0 auto; padding:16px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px; }
+  .card h2 { margin:0 0 6px; font-size:16px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .login { max-width:460px; margin:32px auto; }
+  input[type=text], input[type=password] { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:10px; font-size:15px; }
+  button { background:var(--pink); color:#fff; border:0; border-radius:10px; padding:10px 16px; font-size:14px; font-weight:600; cursor:pointer; }
+  button.ghost { background:#fff; color:var(--pink-dark); border:1px solid var(--line); }
+  button:disabled { opacity:.6; cursor:default; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:16px; }
+  .stat { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .stat .v { font-size:24px; font-weight:700; color:var(--pink-dark); }
+  .stat .l { font-size:12px; color:var(--muted); margin-top:2px; }
+  #grid { height:470px; width:100%; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; line-height:20px; }
+  .s-Paid { background:#e3f7ee; color:#0c7a53; }
+  .s-Preparing { background:#fff4d6; color:#8a6100; }
+  .s-Ready { background:#e2edff; color:#2457b5; }
+  .s-Done { background:#ececec; color:#555; }
+  .s-Cancelled { background:#fde4e4; color:#a12929; }
+  .pp { background:#eaf3ff; color:#1d4f9e; }
+  .pp2 { background:#e3f7ee; color:#0c7a53; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  .chip { background:var(--pink-soft); color:var(--pink-dark); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer; }
+  #answer { margin-top:10px; padding:12px; border-radius:10px; background:var(--pink-soft); display:none; white-space:pre-wrap; }
+  .err { color:#a12929; font-size:13px; margin-top:8px; min-height:18px; }
+  .hidden { display:none !important; }
+  .toolbar input[type=text] { max-width:300px; }
+  label.chk { font-size:13px; color:var(--muted); display:flex; gap:6px; align-items:center; }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html">&larr; Back to Babes &amp; Babies</a>
+  <h1>Shop orders</h1>
+  <span id="role" class="role hidden"></span>
+</header>
+
+<main>
+  <section id="login" class="card login">
+    <h2>Owner dashboard</h2>
+    <p class="muted">Enter your access token. Reviewers: the read-only demo token is in the README.</p>
+    <form id="loginForm" autocomplete="off">
+      <input id="tokenInput" type="password" placeholder="Access token" aria-label="Access token">
+      <div class="row" style="margin-top:10px"><button type="submit">Open dashboard</button></div>
+      <div id="loginErr" class="err" role="alert"></div>
+    </form>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="stats" id="stats"></div>
+
+    <div class="card">
+      <div class="row toolbar" style="justify-content:space-between">
+        <div class="row">
+          <input id="quick" type="text" placeholder="Search orders (item, style, status…)" aria-label="Search orders">
+          <button id="export" class="ghost" type="button">Export CSV</button>
+          <button id="refresh" class="ghost" type="button">Refresh</button>
+        </div>
+        <label class="chk"><input id="auto" type="checkbox" checked> Auto-refresh every 20s</label>
+      </div>
+      <p class="muted" id="hint" style="margin:8px 0 10px"></p>
+      <div id="grid" class="ag-theme-quartz"></div>
+      <div id="msg" class="err"></div>
+    </div>
+
+    <div class="card">
+      <h2>Ask about your orders</h2>
+      <p class="muted">The assistant answers only from the orders shown above.</p>
+      <div class="chips" id="chips"></div>
+      <form id="askForm" class="row" autocomplete="off">
+        <input id="askInput" type="text" maxlength="200" placeholder="For example: how many bookings did I get this week?" style="flex:1; min-width:220px" aria-label="Question about orders">
+        <button type="submit" id="askBtn">Ask</button>
+      </form>
+      <div id="answer" role="status"></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
+<script>
+(function () {
+  var WORKER_URL = 'https://babesandbabies-chat.babesandbabies.workers.dev';
+  var STATUSES = ['Paid', 'Preparing', 'Ready', 'Done', 'Cancelled'];
+  var token = '';
+  var role = null;
+  var gridApi = null;
+  var timer = null;
+  var reverting = false;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  try { token = sessionStorage.getItem('bb_orders_token') || ''; } catch (e) { token = ''; }
+  var m = /[#&]token=([^&]+)/.exec(location.hash);
+  if (m) {
+    token = decodeURIComponent(m[1]);
+    try { sessionStorage.setItem('bb_orders_token', token); } catch (e) {}
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  function money(v, cur) {
+    try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD' }).format(Number(v)); }
+    catch (e) { return (cur || 'USD') + ' ' + Number(v).toFixed(2); }
+  }
+
+  function badge(text, cls) {
+    var s = document.createElement('span');
+    s.className = 'badge ' + cls;
+    s.textContent = text;
+    return s;
+  }
+
+  function showLogin(message) {
+    $('app').classList.add('hidden');
+    $('login').classList.remove('hidden');
+    $('role').classList.add('hidden');
+    $('loginErr').textContent = message || '';
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  function renderStats(s) {
+    var box = $('stats');
+    box.textContent = '';
+    var tiles = [
+      [String(s.orders), 'Paid orders'],
+      [money(s.revenue, s.currency), 'Sales'],
+      [String(s.bookings), 'Bookings'],
+      [String(s.awaiting), 'Need attention'],
+      [String(s.last7Days.orders), 'Orders, last 7 days']
+    ];
+    tiles.forEach(function (t) {
+      var d = document.createElement('div'); d.className = 'stat';
+      var v = document.createElement('div'); v.className = 'v'; v.textContent = t[0];
+      var l = document.createElement('div'); l.className = 'l'; l.textContent = t[1];
+      d.appendChild(v); d.appendChild(l); box.appendChild(d);
+    });
+  }
+
+  function buildGrid() {
+    if (gridApi) return;
+    if (!window.agGrid) { $('msg').textContent = 'The grid library did not load. Check your connection and reload.'; return; }
+    var cols = [
+      { headerName: 'Time', field: 'createdAt', sort: 'desc', width: 175,
+        valueFormatter: function (p) { return p.value ? new Date(p.value).toLocaleString() : ''; } },
+      { headerName: 'Order', field: 'orderId', width: 190, cellStyle: { fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '12px' } },
+      { headerName: 'Type', field: 'kind', width: 160 },
+      { headerName: 'Items', minWidth: 240, flex: 2, wrapText: true, autoHeight: true,
+        valueGetter: function (p) { return (p.data.items || []).map(function (i) { return i.qty + ' \u00d7 ' + i.name; }).join(', '); } },
+      { headerName: 'Style / note', field: 'note', minWidth: 150, flex: 1, wrapText: true, autoHeight: true },
+      { headerName: 'Total', width: 110, type: 'rightAligned',
+        valueGetter: function (p) { return p.data.total; },
+        valueFormatter: function (p) { return money(p.value, p.data.currency); } },
+      { headerName: 'Status', field: 'status', width: 140,
+        editable: function () { return role === 'admin'; },
+        cellEditor: 'agSelectCellEditor', cellEditorParams: { values: STATUSES },
+        cellRenderer: function (p) { return badge(p.value || '', 's-' + p.value); } },
+      { headerName: 'PayPal check', width: 190,
+        valueGetter: function (p) { return p.data.webhookConfirmed ? 'Verified + webhook' : 'Verified with PayPal'; },
+        cellRenderer: function (p) { return badge(p.value, p.data.webhookConfirmed ? 'pp2' : 'pp'); } },
+      { headerName: 'Buyer', field: 'firstName', width: 120 }
+    ];
+    gridApi = agGrid.createGrid($('grid'), {
+      columnDefs: cols,
+      defaultColDef: { sortable: true, filter: true, resizable: true },
+      rowData: [],
+      pagination: true,
+      paginationPageSize: 15,
+      animateRows: true,
+      getRowId: function (p) { return p.data.orderId; },
+      overlayNoRowsTemplate: 'No paid orders yet. Place a test order in the shop and refresh.',
+      onCellValueChanged: onStatusEdit
+    });
+  }
+
+  async function onStatusEdit(e) {
+    if (reverting || e.colDef.field !== 'status') return;
+    $('msg').textContent = '';
+    try {
+      var res = await fetch(WORKER_URL + '/admin/orders/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ orderId: e.data.orderId, status: e.newValue })
+      });
+      if (!res.ok) throw new Error('status ' + res.status);
+      load(true);
+    } catch (err) {
+      reverting = true;
+      e.node.setDataValue('status', e.oldValue);
+      reverting = false;
+      $('msg').textContent = 'Could not change the status (' + err.message + ').';
+    }
+  }
+
+  async function load(quiet) {
+    if (!token) { showLogin(''); return; }
+    if (!quiet) $('msg').textContent = 'Loading\u2026';
+    try {
+      var res = await fetch(WORKER_URL + '/admin/orders', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.status === 401) { try { sessionStorage.removeItem('bb_orders_token'); } catch (e) {} token = ''; showLogin('That token was not accepted.'); return; }
+      if (res.status === 503) { showLogin('The dashboard is not set up yet on the server.'); return; }
+      if (!res.ok) throw new Error('status ' + res.status);
+      var data = await res.json();
+      role = data.role;
+      $('login').classList.add('hidden');
+      $('app').classList.remove('hidden');
+      var r = $('role');
+      r.textContent = role === 'admin' ? 'Owner' : 'Read-only demo view';
+      r.classList.remove('hidden');
+      $('hint').textContent = role === 'admin'
+        ? 'Click a status to change it. Sort or filter any column.'
+        : 'Read-only view. Sort and filter any column, export to CSV, or ask a question below.';
+      renderStats(data.summary);
+      buildGrid();
+      if (gridApi) gridApi.setGridOption('rowData', data.orders);
+      $('msg').textContent = '';
+      if (!timer) timer = setInterval(function () {
+        if ($('auto').checked && document.visibilityState === 'visible') load(true);
+      }, 20000);
+    } catch (err) {
+      $('msg').textContent = 'Could not load orders (' + err.message + ').';
+    }
+  }
+
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    token = $('tokenInput').value.trim();
+    if (!token) { $('loginErr').textContent = 'Enter a token.'; return; }
+    try { sessionStorage.setItem('bb_orders_token', token); } catch (err) {}
+    $('tokenInput').value = '';
+    load(false);
+  });
+  $('refresh').addEventListener('click', function () { load(false); });
+  $('quick').addEventListener('input', function (e) { if (gridApi) gridApi.setGridOption('quickFilterText', e.target.value); });
+  $('export').addEventListener('click', function () {
+    if (gridApi) gridApi.exportDataAsCsv({ fileName: 'babes-orders.csv' });
+  });
+
+  var QUESTIONS = ['How many bookings this week?', 'What is my revenue?', 'Which items sell most?', 'What needs attention?'];
+  QUESTIONS.forEach(function (q) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = q;
+    b.addEventListener('click', function () { $('askInput').value = q; ask(q); });
+    $('chips').appendChild(b);
+  });
+
+  async function ask(question) {
+    var box = $('answer');
+    box.style.display = 'block';
+    box.textContent = 'Thinking\u2026';
+    $('askBtn').disabled = true;
+    try {
+      var res = await fetch(WORKER_URL + '/admin/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ question: question })
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok) throw new Error(data.error || ('status ' + res.status));
+      box.textContent = data.answer + (data.via === 'rules' ? '\n(quick answer from your numbers)' : '');
+    } catch (err) {
+      box.textContent = 'Could not get an answer (' + err.message + ').';
+    } finally {
+      $('askBtn').disabled = false;
+    }
+  }
+  $('askForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var q = $('askInput').value.trim();
+    if (q) ask(q);
+  });
+
+  if (token) load(false); else showLogin('');
+})();
+</script>
+</body>
+</html>

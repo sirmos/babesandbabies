@@ -4,3 +4,9 @@ compatibility_date = "2024-01-01"
 
 [ai]
 binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "babes-orders"
+database_id = "d481707c-bd1d-4905-b3f3-604830c794bf"
+

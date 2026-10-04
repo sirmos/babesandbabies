@@ -1239,6 +1239,7 @@
           cartLinesElement.append(row);
         }
 
+        state.readyForCheckout = state.cart.length > 0 && state.total > 0;
         checkoutPrompt.hidden = state.cart.length === 0 || state.readyForCheckout;
         if (!checkoutPrompt.hidden) checkoutPrompt.textContent = 'Ask the assistant to prepare your cart for checkout.';
         tryStyleLink.hidden = !state.note;
@@ -1407,7 +1408,7 @@
           state.messages.push({ role: 'assistant', text: String(data.reply || '') });
           appendMessage('assistant', String(data.reply || 'I’m here to help you shop.'));
           renderCart();
-          if (state.readyForCheckout) {
+          if (data.readyForCheckout === true) {
             document.getElementById('cart-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         } catch (error) {

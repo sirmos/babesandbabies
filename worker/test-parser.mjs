@@ -220,7 +220,7 @@ try {
   const catalogResponse = await worker.fetch(new Request('https://worker.test/shop/catalog'), {});
   const catalogBody = await catalogResponse.json();
   assert.equal(catalogBody.find((item) => item.id === 'satin_bonnet').category, 'hair');
-  assert.equal(catalogBody.find((item) => item.id === 'satin_bonnet').image, 'https://babesandbabies-dcb39.web.app/images/products/satin_bonnet.jpg');
+  assert.equal(catalogBody.find((item) => item.id === 'satin_bonnet').image, 'https://babesandbabies-dcb39.web.app/images/products/satin_bonnet.jpg?v=2');
 } finally {
   globalThis.fetch = originalFetch;
   console.log = originalConsoleLog;

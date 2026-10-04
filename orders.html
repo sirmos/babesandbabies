@@ -40,7 +40,11 @@
   .pp2 { background:#e3f7ee; color:#0c7a53; }
   .chips { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
   .chip { background:var(--pink-soft); color:var(--pink-dark); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer; }
-  #answer { margin-top:10px; padding:12px; border-radius:10px; background:var(--pink-soft); display:none; white-space:pre-wrap; }
+  #log { margin-top:10px; max-height:300px; overflow-y:auto; display:none; }
+  .msg { padding:10px 12px; border-radius:10px; margin:6px 0; white-space:pre-wrap; font-size:14px; max-width:92%; }
+  .msg.q { background:#fff; border:1px solid var(--line); margin-left:auto; text-align:right; }
+  .msg.a { background:var(--pink-soft); }
+  .msg.err { background:#fde4e4; color:#a12929; }
   .err { color:#a12929; font-size:13px; margin-top:8px; min-height:18px; }
   .hidden { display:none !important; }
   .toolbar input[type=text] { max-width:300px; }
@@ -90,7 +94,8 @@
         <input id="askInput" type="text" maxlength="200" placeholder="For example: how many bookings did I get this week?" style="flex:1; min-width:220px" aria-label="Question about orders">
         <button type="submit" id="askBtn">Ask</button>
       </form>
-      <div id="answer" role="status"></div>
+      <div id="log" role="log" aria-live="polite"></div>
+      <div class="row" style="margin-top:8px"><button type="button" id="clearLog" class="ghost hidden">Clear chat</button></div>
     </div>
   </section>
 </main>
@@ -158,24 +163,24 @@
     if (gridApi) return;
     if (!window.agGrid) { $('msg').textContent = 'The grid library did not load. Check your connection and reload.'; return; }
     var cols = [
-      { headerName: 'Time', field: 'createdAt', sort: 'desc', width: 175,
+      { headerName: 'Time', field: 'createdAt', sort: 'desc', flex: 1.2, minWidth: 120,
         valueFormatter: function (p) { return p.value ? new Date(p.value).toLocaleString() : ''; } },
-      { headerName: 'Order', field: 'orderId', width: 190, cellStyle: { fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '12px' } },
-      { headerName: 'Type', field: 'kind', width: 160 },
-      { headerName: 'Items', minWidth: 240, flex: 2, wrapText: true, autoHeight: true,
+      { headerName: 'Order', field: 'orderId', flex: 1.3, minWidth: 140, cellStyle: { fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '12px' } },
+      { headerName: 'Type', field: 'kind', flex: 1, minWidth: 110 },
+      { headerName: 'Items', flex: 2.4, minWidth: 180, wrapText: true, autoHeight: true,
         valueGetter: function (p) { return (p.data.items || []).map(function (i) { return i.qty + ' \u00d7 ' + i.name; }).join(', '); } },
-      { headerName: 'Style / note', field: 'note', minWidth: 150, flex: 1, wrapText: true, autoHeight: true },
-      { headerName: 'Total', width: 110, type: 'rightAligned',
+      { headerName: 'Style / note', field: 'note', flex: 1.2, minWidth: 100, wrapText: true, autoHeight: true },
+      { headerName: 'Total', flex: 0.8, minWidth: 80, type: 'rightAligned',
         valueGetter: function (p) { return p.data.total; },
         valueFormatter: function (p) { return money(p.value, p.data.currency); } },
-      { headerName: 'Status', field: 'status', width: 140,
+      { headerName: 'Status', field: 'status', flex: 1, minWidth: 110,
         editable: function () { return role === 'admin'; },
         cellEditor: 'agSelectCellEditor', cellEditorParams: { values: STATUSES },
         cellRenderer: function (p) { return badge(p.value || '', 's-' + p.value); } },
-      { headerName: 'PayPal check', width: 190,
+      { headerName: 'PayPal check', flex: 1.3, minWidth: 130,
         valueGetter: function (p) { return p.data.webhookConfirmed ? 'Verified + webhook' : 'Verified with PayPal'; },
         cellRenderer: function (p) { return badge(p.value, p.data.webhookConfirmed ? 'pp2' : 'pp'); } },
-      { headerName: 'Buyer', field: 'firstName', width: 120 }
+      { headerName: 'Buyer', field: 'firstName', flex: 0.8, minWidth: 80 }
     ];
     gridApi = agGrid.createGrid($('grid'), {
       columnDefs: cols,
@@ -257,14 +262,25 @@
   QUESTIONS.forEach(function (q) {
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'chip'; b.textContent = q;
-    b.addEventListener('click', function () { $('askInput').value = q; ask(q); });
+    b.addEventListener('click', function () { ask(q); });
     $('chips').appendChild(b);
   });
 
+  function addMsg(text, cls) {
+    var log = $('log');
+    log.style.display = 'block';
+    var d = document.createElement('div');
+    d.className = 'msg ' + cls;
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+    $('clearLog').classList.remove('hidden');
+    return d;
+  }
+
   async function ask(question) {
-    var box = $('answer');
-    box.style.display = 'block';
-    box.textContent = 'Thinking\u2026';
+    addMsg(question, 'q');
+    var pending = addMsg('Thinking\u2026', 'a');
     $('askBtn').disabled = true;
     try {
       var res = await fetch(WORKER_URL + '/admin/ask', {
@@ -274,17 +290,24 @@
       });
       var data = await res.json().catch(function () { return {}; });
       if (!res.ok) throw new Error(data.error || ('status ' + res.status));
-      box.textContent = data.answer + (data.via === 'rules' ? '\n(quick answer from your numbers)' : '');
+      pending.textContent = data.answer + (data.via === 'rules' ? '\n(quick answer from your numbers)' : '');
     } catch (err) {
-      box.textContent = 'Could not get an answer (' + err.message + ').';
+      pending.className = 'msg err';
+      pending.textContent = 'Could not get an answer (' + err.message + ').';
     } finally {
       $('askBtn').disabled = false;
+      $('log').scrollTop = $('log').scrollHeight;
     }
   }
+  $('clearLog').addEventListener('click', function () {
+    $('log').textContent = '';
+    $('log').style.display = 'none';
+    $('clearLog').classList.add('hidden');
+  });
   $('askForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var q = $('askInput').value.trim();
-    if (q) ask(q);
+    if (q) { ask(q); $('askInput').value = ''; }
   });
 
   if (token) load(false); else showLogin('');

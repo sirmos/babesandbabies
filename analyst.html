@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stripe Analyst | Babes &amp; Babies</title>
+<style>
+  :root { --pink:#e8457c; --soft:#fff3f8; --line:#f2c9d9; --ink:#3a2530; --muted:#8a6f7c; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--soft); color:var(--ink); font-family:system-ui,Segoe UI,Arial,sans-serif; }
+  header { background:var(--pink); color:#fff; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; font-size:14px; }
+  header a { color:#fff; text-decoration:none; }
+  main { max-width:900px; margin:0 auto; padding:18px; }
+  h1 { font-family:Georgia,serif; margin:8px 0 2px; }
+  h2 { font-family:Georgia,serif; font-size:18px; margin:0 0 10px; }
+  .sub { color:var(--muted); margin:0 0 16px; }
+  section { background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px; }
+  .tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .tile { background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:10px; }
+  .tile b { display:block; font-size:22px; }
+  .tile span { font-size:12px; color:var(--muted); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid #f6e3eb; }
+  td.n, th.n { text-align:right; }
+  button, select, input[type=text] { font:inherit; }
+  button { background:var(--pink); color:#fff; border:0; border-radius:5px; padding:8px 14px; cursor:pointer; }
+  button.chip { background:#fff; color:var(--pink); border:1px solid var(--pink); border-radius:999px; padding:6px 12px; margin:0 6px 6px 0; font-size:13px; }
+  button:disabled { opacity:.5; cursor:wait; }
+  select, input[type=text] { padding:8px; border:1px solid var(--line); border-radius:5px; width:100%; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px; }
+  label { font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
+  #result { white-space:pre-wrap; line-height:1.5; }
+  details { margin-top:10px; }
+  pre { background:#2b1d25; color:#f7e6ee; padding:10px; border-radius:6px; overflow:auto; font-size:12px; }
+  .note { font-size:12px; color:var(--muted); }
+  @media (max-width:600px) { .tiles, .row { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header><a href="/">&larr; Back to Babes &amp; Babies</a><span>Stripe Analyst</span></header>
+<main>
+  <h1>Stripe Analyst</h1>
+  <p class="sub">Describe it. Run it. Make better business decisions.</p>
+
+  <section>
+    <h2>Your shop right now</h2>
+    <div class="tiles">
+      <div class="tile"><b id="t-rev">-</b><span>Total sales</span></div>
+      <div class="tile"><b id="t-orders">-</b><span>Orders</span></div>
+      <div class="tile"><b id="t-avg">-</b><span>Average order</span></div>
+    </div>
+    <table><thead><tr><th>Product</th><th class="n">Units</th><th class="n">Sales</th></tr></thead><tbody id="prod"></tbody></table>
+    <p class="note" id="src">Loading orders from Stripe (test mode)...</p>
+  </section>
+
+  <section>
+    <h2>Try a price change</h2>
+    <div class="row">
+      <div><label for="p">Product</label><select id="p"></select></div>
+      <div><label for="pct">Change price by <b id="pctv">10</b>%</label><input id="pct" type="range" min="-30" max="50" value="10"></div>
+    </div>
+    <div class="row">
+      <div><label for="dem">If I do, I expect units sold to change by <b id="demv">-5</b>%</label><input id="dem" type="range" min="-60" max="30" value="-5"></div>
+      <div style="align-self:end"><button id="go-price">Run price test</button></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Quick questions</h2>
+    <button class="chip" data-goal="Which products sell best and which sell slowest? Show units and sales for each product.">Best and slowest sellers</button>
+    <button class="chip" data-goal="Forecast cash flow for the next 30 days.">Next 30 days forecast</button>
+    <button class="chip" data-goal="Which pairs of products are often bought in the same order? Suggest bundles.">Bundle ideas</button>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <input type="text" id="free" placeholder="Or ask your own question about your sales" maxlength="300">
+      <button id="go-free">Ask</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Answer</h2>
+    <div id="status" class="note">Pick a question above. The agent writes code, runs it in a CreateOS sandbox, fixes its own mistakes, then explains the result.</div>
+    <div id="result"></div>
+    <details id="det" hidden><summary>See the code the agent ran</summary>
+      <pre id="code"></pre><b>Sandbox output</b><pre id="out"></pre>
+    </details>
+  </section>
+  <p class="note">Test mode only. No real money moves. Test card: 4242 4242 4242 4242.</p>
+</main>
+
+<script>
+// After you deploy the server, put its address here (no slash at the end).
+// Leave it empty when this page is served by the server itself.
+const API = "";
+
+const $ = (id) => document.getElementById(id);
+const money = (n) => "$" + Number(n).toFixed(2);
+
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function fmt(text) { return esc(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>"); }
+
+async function loadSummary() {
+  try {
+    const r = await fetch(API + "/api/summary");
+    const s = await r.json();
+    if (!r.ok) throw new Error(s.error);
+    $("t-rev").textContent = money(s.revenue);
+    $("t-orders").textContent = s.orders;
+    $("t-avg").textContent = money(s.avgOrder);
+    $("prod").innerHTML = s.products.map((p) =>
+      `<tr><td>${esc(p.name)}</td><td class="n">${p.units}</td><td class="n">${money(p.revenue)}</td></tr>`).join("");
+    $("p").innerHTML = s.catalog.map((c) => `<option>${esc(c.name)}</option>`).join("");
+    $("src").textContent = s.usingStripe ? "Live from your Stripe test account." : "Showing sample data. Add a Stripe test key to use your own orders.";
+  } catch (e) {
+    $("src").textContent = "Could not load orders: " + e.message;
+  }
+}
+
+async function ask(goal) {
+  const buttons = document.querySelectorAll("button");
+  buttons.forEach((b) => (b.disabled = true));
+  $("result").textContent = "";
+  $("det").hidden = true;
+  $("status").textContent = "Working on it. The agent is writing code and running it in a sandbox. This can take up to a minute.";
+  try {
+    const r = await fetch(API + "/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal }) });
+    const j = await r.json();
+    if (!r.ok || !j.ok) throw new Error(j.error || "No answer");
+    $("status").textContent = `Done. The agent needed ${j.tries} ${j.tries === 1 ? "try" : "tries"}.`;
+    $("result").innerHTML = fmt(j.answer);
+    $("code").textContent = j.code;
+    $("out").textContent = j.output;
+    $("det").hidden = false;
+  } catch (e) {
+    $("status").textContent = "Sorry: " + e.message;
+  } finally {
+    buttons.forEach((b) => (b.disabled = false));
+  }
+}
+
+$("pct").oninput = () => ($("pctv").textContent = $("pct").value);
+$("dem").oninput = () => ($("demv").textContent = $("dem").value);
+$("go-price").onclick = () => ask(
+  `Price test for the product "${$("p").value}". If I change its price by ${$("pct").value}% and I expect its units sold to change by ${$("dem").value}%, what happens to that product's sales and to total sales? Use the order history for the current units sold and price.`
+);
+document.querySelectorAll(".chip").forEach((b) => (b.onclick = () => ask(b.dataset.goal)));
+$("go-free").onclick = () => $("free").value.trim() && ask($("free").value.trim());
+$("free").onkeydown = (e) => e.key === "Enter" && $("go-free").click();
+
+loadSummary();
+</script>
+</body>
+</html>
